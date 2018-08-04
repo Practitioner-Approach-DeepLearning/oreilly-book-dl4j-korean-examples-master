@@ -63,7 +63,7 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- parrallel wrapper 의존성(다중 GPU를 사용한 파라미터 평균화) -->
+        <!-- parallel wrapper 의존성(다중 GPU를 사용한 파라미터 평균화) -->
         <dependency>
             <groupId>org.deeplearning4j</groupId>
             <artifactId>deeplearning4j-parallel-wrapper</artifactId>
