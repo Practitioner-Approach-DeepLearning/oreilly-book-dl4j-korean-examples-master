@@ -1,6 +1,6 @@
 server:
-#  softNofileLimit: 1000
-#  hardNofileLimit: 1000
+#  최대 소켓 권고(soft limit): 1000
+#  최대 소켓 제한(hard limit): 1000
   applicationConnectors:
     - type: http
       port: 8080
@@ -14,16 +14,16 @@ server:
   requestLog:
     appenders: []
 
-# Logging settings.
+# 로깅 설정
 logging:
 
-  # The default level of all loggers. Can be OFF, ERROR, WARN, INFO, DEBUG, TRACE, or ALL.
+  # 루트 로거 기본 레벨 설정. OFF, ERROR, WARN, INFO, DEBUG, TRACE, ALL 설정 가능.
   level: INFO
 
-  # Logger-specific levels.
+  # 하위 로거별 레베 설정
   loggers:
 
-    # Sets the level for 'com.example.app' to DEBUG.
+    # 'com.example.app' 레벨 DEBUG로 설정.
     org.deeplearning4j: INFO
     org.eclipse.jetty: INFO
 
