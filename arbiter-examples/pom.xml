@@ -32,27 +32,27 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- ND4J backend. You need one in every DL4J project. Normally define artifactId as either "nd4j-native-platform" or "nd4j-cuda-7.5-platform" -->
+        <!-- ND4J 백엔드. 모든 DL4J 프로젝트에 필요함. 보통 artifactId를 "nd4j-native-platform" 또는 "nd4j-cuda-7.5-platform"로 설정하면 포함됨 -->
         <dependency>
             <groupId>org.nd4j</groupId>
             <artifactId>${nd4j.backend}</artifactId>
         </dependency>
 
-        <!-- Core DL4J functionality -->
+        <!-- DL4J 코어 기능 -->
         <dependency>
             <groupId>org.deeplearning4j</groupId>
             <artifactId>deeplearning4j-core</artifactId>
             <version>${dl4j.version}</version>
         </dependency>
 
-        <!-- Force guava versions for using Arbiter UI -->
+        <!-- Arbiter UI를 사용할 수 있도록 guava 버전을 고정 -->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
         </dependency>
 
-        <!-- Arbiter: used for hyperparameter optimization -->
+        <!-- 아비터: 하이퍼파라미터를 최적화할 때 사용 -->
         <dependency>
             <groupId>org.deeplearning4j</groupId>
             <artifactId>arbiter-deeplearning4j</artifactId>
