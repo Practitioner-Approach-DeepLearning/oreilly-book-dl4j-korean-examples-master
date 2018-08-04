@@ -10,7 +10,7 @@
     <name>DeepLearning4j Examples Parent</name>
     <description>Examples of training different data sets</description>
     <properties>
-        <!-- Change the nd4j.backend property to nd4j-cuda-7.5-platform or nd4j-cuda-8.0-platform to use CUDA GPUs -->
+        <!-- CUDA GPU를 사용하려면 nd4j.backend 설정을 nd4j-cuda-7.5-platform 또는 nd4j-cuda-8.0-platform 로 변경해야 함. -->
         <nd4j.backend>nd4j-native-platform</nd4j.backend>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <shadedClassifier>bin</shadedClassifier>
@@ -38,7 +38,7 @@
         <module>arbiter-examples</module>
     </modules>
 
-    <!-- Maven Enforcer: Ensures user has an up to date version of Maven before building -->
+    <!-- Maven Enforcer: 빌드 하기 전에 사용자의 메이븐 버전이 최신인지 확인함. -->
     <build>
         <plugins>
             <plugin>
