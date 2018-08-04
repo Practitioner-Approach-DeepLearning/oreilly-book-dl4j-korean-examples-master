@@ -23,36 +23,36 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Created by agibsonccc on 9/16/15.
+ * 9/16/15에 agibsonccc가 생성.
  */
 public class LenetMnistExample {
     private static final Logger log = LoggerFactory.getLogger(LenetMnistExample.class);
 
     public static void main(String[] args) throws Exception {
-        int nChannels = 1; // Number of input channels
-        int outputNum = 10; // The number of possible outcomes
-        int batchSize = 64; // Test batch size
-        int nEpochs = 1; // Number of training epochs
-        int iterations = 1; // Number of training iterations
+        int nChannels = 1; // 입력 채널 개수
+        int outputNum = 10; // 출력 가능 개수
+        int batchSize = 64; // 테스트 배치 크기
+        int nEpochs = 1; // 학습 에포크 횟수
+        int iterations = 1; // 학습 반복 횟수
         int seed = 123; //
 
         /*
-            Create an iterator using the batch size for one iteration
+            학습 반복마다 배치 크기를 사용하는 반복자 생성
          */
         log.info("Load data....");
         DataSetIterator mnistTrain = new MnistDataSetIterator(batchSize,true,12345);
         DataSetIterator mnistTest = new MnistDataSetIterator(batchSize,false,12345);
 
         /*
-            Construct the neural network
+            신경망 구축
          */
         log.info("Build model....");
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(seed)
-                .iterations(iterations) // Training iterations as above
+                .iterations(iterations) // 학습 반복 횟수 설정
                 .regularization(true).l2(0.0005)
                 /*
-                    Uncomment the following for learning decay and bias
+                    학습 감쇠 및 편향을 적용하려면 아래 주석을 해제할 것
                  */
                 .learningRate(.01)//.biasLearningRate(0.02)
                 //.learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(0.001).lrPolicyPower(0.75)
@@ -61,7 +61,7 @@ public class LenetMnistExample {
                 .updater(Updater.NESTEROVS).momentum(0.9)
                 .list()
                 .layer(0, new ConvolutionLayer.Builder(5, 5)
-                        //nIn and nOut specify depth. nIn here is the nChannels and nOut is the number of filters to be applied
+                        // nIn과 nOut으로 깊이 지정. nIn은 채널 수고 nOut은 필터 수다.
                         .nIn(nChannels)
                         .stride(1, 1)
                         .nOut(20)
@@ -72,7 +72,7 @@ public class LenetMnistExample {
                         .stride(2,2)
                         .build())
                 .layer(2, new ConvolutionLayer.Builder(5, 5)
-                        //Note that nIn need not be specified in later layers
+                        // 이 계층부터는 nIn을 설정할 필요가 없음
                         .stride(1, 1)
                         .nOut(50)
                         .activation(Activation.IDENTITY)
@@ -87,21 +87,20 @@ public class LenetMnistExample {
                         .nOut(outputNum)
                         .activation(Activation.SOFTMAX)
                         .build())
-                .setInputType(InputType.convolutionalFlat(28,28,1)) //See note below
+                .setInputType(InputType.convolutionalFlat(28,28,1)) // 아래 주석 참조
                 .backprop(true).pretrain(false).build();
 
         /*
-        Regarding the .setInputType(InputType.convolutionalFlat(28,28,1)) line: This does a few things.
-        (a) It adds preprocessors, which handle things like the transition between the convolutional/subsampling layers
-            and the dense layer
-        (b) Does some additional configuration validation
-        (c) Where necessary, sets the nIn (number of input neurons, or input depth in the case of CNNs) values for each
-            layer based on the size of the previous layer (but it won't override values manually set by the user)
+        .setInputType(InputType.convolutionalFlat(28,28,1)) 행은 몇가지 작업을 수행한다.
+        (a) 합성곱 / 부분 샘플링 / 완전 연결계층 간 전환 등을 처리하는 전처리기를 추가
+        (b) 몇가지 구성 검증을 추가로 수행
+        (c) 필요하다면 이전 계층의 크기를 기반으로 각 계층에 대한 nIn (합성곱 신경망의 경우 입력 뉴런 개수 또는 입력 깊이) 값을 설정
+            (그러나 사용자가 수동으로 설정한 값을 덮어쓰지는 않음)
 
-        InputTypes can be used with other layer types too (RNNs, MLPs etc) not just CNNs.
-        For normal images (when using ImageRecordReader) use InputType.convolutional(height,width,depth).
-        MNIST record reader is a special case, that outputs 28x28 pixel grayscale (nChannels=1) images, in a "flattened"
-        row vector format (i.e., 1x784 vectors), hence the "convolutionalFlat" input type used here.
+        InputTypes은 합성곱 신경망 뿐만 아니라 다른 계층 유형(순환 신경망, 다층 퍼셉트론 등)에도 사용할 수 있다.
+        일반적인 이미지(ImageRecordReader를 사용하는 경우)에는 InputType.convolutional(height, width, depth)를 사용하라.
+        MNIST 레코드 리더는 28x28 픽셀 그레이 스케일 (채널 1개) 이미지를 "평평한" 행 벡터 형태(1x784 벡터)로 출력하는 특수한 경우이므로
+        여기서는 "convolutionalFlat" 입력 유형이 사용됐다.
         */
 
         MultiLayerNetwork model = new MultiLayerNetwork(conf);

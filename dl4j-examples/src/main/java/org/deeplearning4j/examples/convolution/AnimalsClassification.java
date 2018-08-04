@@ -42,20 +42,20 @@ import java.util.Random;
 import static org.bytedeco.javacpp.opencv_imgproc.COLOR_BGR2YCrCb;
 
 /**
- * Animal Classification
+ * 동물 분류 예제
  *
- * Example classification of photos from 4 different animals (bear, duck, deer, turtle).
+ * 동물 4종(곰, 오리, 사슴, 거북이) 사진 분류 예제
  *
- * References:
- *  - U.S. Fish and Wildlife Service (animal sample dataset): http://digitalmedia.fws.gov/cdm/
- *  - Tiny ImageNet Classification with CNN: http://cs231n.stanford.edu/reports/leonyao_final.pdf
+ * 참조:
+ *  - 미국 어류 및 야생동물 서비스(동물 샘플 데이터셋): http://digitalmedia.fws.gov/cdm/
+ *  - 합성곱 신경망으로 작은 규모의 ImageNet 분류: http://cs231n.stanford.edu/reports/leonyao_final.pdf
  *
- * CHALLENGE: Current setup gets low score results. Can you improve the scores? Some approaches:
- *  - Add additional images to the dataset
- *  - Apply more transforms to dataset
- *  - Increase epochs
- *  - Try different model configurations
- *  - Tune by adjusting learning rate, updaters, activation & loss functions, regularization, ...
+ * 과제: 현재 설정은 점수 결과가 높지 않다. 점수를 더 높이려면 어떻게 해야 하는가? 몇가지 접근법을 제시하자면
+ *  - 데이터셋 이미지 추가
+ *  - 데이터셋 변환 추가 적용
+ *  - 에포크 증가
+ *  - 모델 구성 변경 시도
+ *  - 학습률, 업데이터, 활성값, 손실함수, 규제 등을 조정해 튜닝
  */
 
 public class AnimalsClassification {
@@ -76,16 +76,16 @@ public class AnimalsClassification {
     protected static int nCores = 2;
     protected static boolean save = false;
 
-    protected static String modelType = "AlexNet"; // LeNet, AlexNet or Custom but you need to fill it out
+    protected static String modelType = "AlexNet"; // LeNet, AlexNet, custom 중 하나를 반드시 입력해야 함
 
     public void run(String[] args) throws Exception {
 
         log.info("Load data....");
-        /**cd
-         * Data Setup -> organize and limit data file paths:
-         *  - mainPath = path to image files
-         *  - fileSplit = define basic dataset split with limits on format
-         *  - pathFilter = define additional file load filter to limit size and balance batch content
+        /**
+         * 데이터 설정 -> 데이터 파일 경로 구성 및 제한:
+         *  - mainPath = 이미지 파일 경로
+         *  - fileSplit = 이미지 포멧을 제한해 기본 데이터 세트 분할 정의
+         *  - pathFilter = 배치의 크기와 균형을 제한하기 위해 추가 파일 로드 필터 정의
          **/
         ParentPathLabelGenerator labelMaker = new ParentPathLabelGenerator();
         File mainPath = new File(System.getProperty("user.dir"), "dl4j-examples/src/main/resources/animals/");
@@ -93,16 +93,16 @@ public class AnimalsClassification {
         BalancedPathFilter pathFilter = new BalancedPathFilter(rng, labelMaker, numExamples, numLabels, batchSize);
 
         /**
-         * Data Setup -> train test split
-         *  - inputSplit = define train and test split
+         * 데이터 설정 -> 학습 테스트 분할
+         *  - inputSplit = 학습, 테스트 분할 정의
          **/
         InputSplit[] inputSplit = fileSplit.sample(pathFilter, numExamples * (1 + splitTrainTest), numExamples * (1 - splitTrainTest));
         InputSplit trainData = inputSplit[0];
         InputSplit testData = inputSplit[1];
 
         /**
-         * Data Setup -> transformation
-         *  - Transform = how to tranform images and generate large dataset to train on
+         * 데이터 설정 -> 변환
+         *  - Transform = 이미지 변환 및 학습용 대규모 데이터셋 생성 방법 정의
          **/
         ImageTransform flipTransform1 = new FlipImageTransform(rng);
         ImageTransform flipTransform2 = new FlipImageTransform(new Random(123));
@@ -111,14 +111,14 @@ public class AnimalsClassification {
         List<ImageTransform> transforms = Arrays.asList(new ImageTransform[]{flipTransform1, warpTransform, flipTransform2});
 
         /**
-         * Data Setup -> normalization
-         *  - how to normalize images and generate large dataset to train on
+         * 데이터 설정 -> 정규화
+         *  - 이미지를 정규화 및 학습을 위한 대규모 데이터셋 생성 방법 정의
          **/
         DataNormalization scaler = new ImagePreProcessingScaler(0, 1);
 
         log.info("Build model....");
 
-        // Uncomment below to try AlexNet. Note change height and width to at least 100
+        // AlexNet을 시도하려면 주석을 해제하라. 또한 높이와 너비를 100 이상으로 변경해야 한다.
 //        MultiLayerNetwork network = new AlexNet(height, width, channels, numLabels, seed, iterations).init();
 
         MultiLayerNetwork network;
@@ -139,10 +139,10 @@ public class AnimalsClassification {
         network.setListeners(new ScoreIterationListener(listenerFreq));
 
         /**
-         * Data Setup -> define how to load data into net:
-         *  - recordReader = the reader that loads and converts image data pass in inputSplit to initialize
-         *  - dataIter = a generator that only loads one batch at a time into memory to save memory
-         *  - trainIter = uses MultipleEpochsIterator to ensure model runs through the data for all epochs
+         * 데이터 설정 -> 데이터를 신경망에 로드하는 법 정의:
+         *  - recordReader = 이미지 데이터를 로드해 변환하고 inputSplit에 저장해 초기화하는 리더
+         *  - dataIter = 한 번에 하나의 배치만 메모리에 로드해 메모리르 절약하는 생성기
+         *  - trainIter = MultipleEpochsIterator를 사용해 모든 에포크의 데이터를 통해 모델이 실행되는지 확인
          **/
         ImageRecordReader recordReader = new ImageRecordReader(height, width, channels, labelMaker);
         DataSetIterator dataIter;
@@ -150,7 +150,7 @@ public class AnimalsClassification {
 
 
         log.info("Train model....");
-        // Train without transformations
+        // 변환 없이 학습
         recordReader.initialize(trainData, null);
         dataIter = new RecordReaderDataSetIterator(recordReader, batchSize, 1, numLabels);
         scaler.fit(dataIter);
@@ -158,7 +158,7 @@ public class AnimalsClassification {
         trainIter = new MultipleEpochsIterator(epochs, dataIter, nCores);
         network.fit(trainIter);
 
-        // Train with transformations
+        // 변환 적용해 학습
         for (ImageTransform transform : transforms) {
             System.out.print("\nTraining on transformation: " + transform.getClass().toString() + "\n\n");
             recordReader.initialize(trainData, transform);
@@ -177,7 +177,7 @@ public class AnimalsClassification {
         Evaluation eval = network.evaluate(dataIter);
         log.info(eval.stats(true));
 
-        // Example on how to get predict results with trained model
+        // 학습된 모델로 예측 결과를 얻는 방법
         dataIter.reset();
         DataSet testDataSet = dataIter.next();
         String expectedResult = testDataSet.getLabelName(0);
@@ -216,15 +216,15 @@ public class AnimalsClassification {
 
     public MultiLayerNetwork lenetModel() {
         /**
-         * Revisde Lenet Model approach developed by ramgo2 achieves slightly above random
-         * Reference: https://gist.github.com/ramgo2/833f12e92359a2da9e5c2fb6333351c5
+         * ramgo2가 개발한 LeNet 모델 개정판은 무작위 모델보다 약간 나은 결과를 보인다.
+         * 참조: https://gist.github.com/ramgo2/833f12e92359a2da9e5c2fb6333351c5
          **/
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
             .seed(seed)
             .iterations(iterations)
-            .regularization(false).l2(0.005) // tried 0.0001, 0.0005
+            .regularization(false).l2(0.005) // 0.0001, 0.0005 사용할 수 있음
             .activation(Activation.RELU)
-            .learningRate(0.0001) // tried 0.00001, 0.00005, 0.000001
+            .learningRate(0.0001) // 0.00001, 0.00005, 0.000001 사용할 수 있음
             .weightInit(WeightInit.XAVIER)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .updater(Updater.RMSPROP).momentum(0.9)
@@ -248,8 +248,7 @@ public class AnimalsClassification {
 
     public MultiLayerNetwork alexnetModel() {
         /**
-         * AlexNet model interpretation based on the original paper ImageNet Classification with Deep Convolutional Neural Networks
-         * and the imagenetExample code referenced.
+         * 원 논문인 ImageNet Classification with Deep Convolutional Neural Networks과 ImageNet 예제 코드를 바탕으로 한 AlexNet 모델
          * http://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf
          **/
 
@@ -263,7 +262,7 @@ public class AnimalsClassification {
             .activation(Activation.RELU)
             .updater(Updater.NESTEROVS)
             .iterations(iterations)
-            .gradientNormalization(GradientNormalization.RenormalizeL2PerLayer) // normalize to prevent vanishing or exploding gradients
+            .gradientNormalization(GradientNormalization.RenormalizeL2PerLayer) // 경사도 소실/발산을 방지하기 위한 정규화
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .learningRate(1e-2)
             .biasLearningRate(1e-2*2)
@@ -303,7 +302,7 @@ public class AnimalsClassification {
 
     public static MultiLayerNetwork customModel() {
         /**
-         * Use this method to build your own custom model.
+         * 이 메서드를 사용해 사용자 지정 모델을 빌드할 수 있다.
          **/
         return null;
     }
