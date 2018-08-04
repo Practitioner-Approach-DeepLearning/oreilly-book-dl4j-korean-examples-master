@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #set -eu
 
-## declare an array variable
+## arr 변수 선언
 declare -a arr=(
 "org.deeplearning4j.examples.convolution.LenetMnistExample"
 "org.deeplearning4j.examples.feedforward.xor.XorExample"
@@ -35,7 +35,7 @@ declare -a arr=(
 "org.deeplearning4j.examples.dataExamples.BasicCSVClassifier"
 )
 
-## now loop through the above array
+## arr 요소 차례로 탐색
 for i in "${arr[@]}"
 do
    echo "$i"
@@ -43,16 +43,16 @@ do
 
 done
 
-# You can access them using echo "${arr[0]}", "${arr[1]}" also
+# echo "${arr[0]}", "${arr[1]}" 를 이용해서 접근할 수도 있음.
 
 
-## declare an array variable
+## arr 변수 선언
 declare -a arr=(
 "org/datavec/transform/basic/BasicDataVecExample"
 "org/datavec/transform/analysis/IrisAnalysis"
 "org/datavec/transform/debugging/PrintSchemasAtEachStep")
 
-## now loop through the above array
+## arr 요소 차례로 탐색
 for i in "${arr[@]}"
 do
    echo "$i"
@@ -60,5 +60,5 @@ do
 
 done
 
-# You can access them using echo "${arr[0]}", "${arr[1]}" also
+# echo "${arr[0]}", "${arr[1]}" 를 이용해서 접근할 수도 있음.
 
