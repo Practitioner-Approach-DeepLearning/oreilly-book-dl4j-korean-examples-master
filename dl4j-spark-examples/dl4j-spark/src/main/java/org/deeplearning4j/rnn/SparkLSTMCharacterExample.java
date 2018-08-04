@@ -39,22 +39,22 @@ import java.nio.file.Files;
 import java.util.*;
 
 /**
- * GravesLSTM + Spark character modelling example
- * Example: Train a LSTM RNN to generates text, one character at a time.
- * Training here is done on Spark
+ * GravesLSTM + 스파크 문자 모델링 예제
+ * 예제: 한번에 문자 하나씩, 문자열을 생성하는 LSTM 순환신경망을 학습하라.
+ * 이 예제는 스파크를 사용해 학습한다.
  *
- * See dl4j-examples/src/main/java/org/deeplearning4j/examples/recurrent/character/GravesLSTMCharModellingExample.java
- * for the single-machine version of this example
+ * 이 예제의 단일 머신 버전은
+ * dl4j-examples/src/main/java/org/deeplearning4j/examples/recurrent/character/GravesLSTMCharModellingExample.java를 참고하라.
  *
- * To run the example locally: Run the example as-is. The example is set up to use Spark local by default.
- * NOTE: Spark local should only be used for development/testing. For data parallel training on a single machine
- * (for example, multi-GPU systems) instead use ParallelWrapper (which is faster than using Spark for training on a single machine).
- * See for example MultiGpuLenetMnistExample in dl4j-cuda-specific-examples
+ * 예제를 로컬에서 돌리고 싶다면 예제를 그대로 실행하면 된다. 이 예제는 기본적으로 스파크 로컬에서 실행하도록 구성되어 있다.
+ * 주의: 스파크 로컬은 개발/테스트 용으로만 사용해야 한다. 대신 (다중 GPU 시스템 같은) 단일 머신에서 데이터를 병렬 학습시킬 때는
+ * ParallelWrapper를 사용하라 (단일 머신에서 스파크를 사용할 때보다 빠르다).
+ * dl4j-cuda-specific-examples에서 MultiGpuLenetMnistExample을 참고하라.
  *
- * To run the example using Spark submit (for example on a cluster): pass "-useSparkLocal false" as the application argument,
- * OR first modify the example by setting the field "useSparkLocal = false"
+ * (클러스터에서 실행하기 위해) 스파크 서브밋을 사용해 예제를 실행시키고 싶다면 "-useParkLocal false"를 애플리케이션 매개변수에 포함시키거나,
+ * 예제 앞 부분의 필드를 "useSparkLocal = false"로 설정하라.
  *
- * @author Alex Black
+ * @author 알렉스 블랙
  */
 public class SparkLSTMCharacterExample {
     private static final Logger log = LoggerFactory.getLogger(SparkLSTMCharacterExample.class);
@@ -63,13 +63,13 @@ public class SparkLSTMCharacterExample {
     private static Map<Character, Integer> CHAR_TO_INT = getCharToInt();
     private static final int N_CHARS = INT_TO_CHAR.size();
     private static int nOut = CHAR_TO_INT.size();
-    private static int exampleLength = 1000;                    //Length of each training example sequence to use
+    private static int exampleLength = 1000;                    //학습 입력 데이터 시퀀스의 길이
 
     @Parameter(names = "-useSparkLocal", description = "Use spark local (helper for testing/running without spark submit)", arity = 1)
     private boolean useSparkLocal = true;
 
     @Parameter(names = "-batchSizePerWorker", description = "Number of examples to fit each worker with")
-    private int batchSizePerWorker = 8;   //How many examples should be used per worker (executor) when fitting?
+    private int batchSizePerWorker = 8;   // 워커(익스큐터) 당 처리할 입력 데이터 개수
 
     @Parameter(names = "-numEpochs", description = "Number of epochs for training")
     private int numEpochs = 1;
@@ -79,12 +79,12 @@ public class SparkLSTMCharacterExample {
     }
 
     protected void entryPoint(String[] args) throws Exception {
-        //Handle command line arguments
+        // 명령줄 인자 다루기
         JCommander jcmdr = new JCommander(this);
         try {
             jcmdr.parse(args);
         } catch (ParameterException e) {
-            //User provides invalid input -> print the usage info
+            // 사용자가 잘못 입력함 -> 사용법 출력
             jcmdr.usage();
             try {
                 Thread.sleep(500);
@@ -94,15 +94,15 @@ public class SparkLSTMCharacterExample {
         }
 
         Random rng = new Random(12345);
-        int lstmLayerSize = 200;                    //Number of units in each GravesLSTM layer
-        int tbpttLength = 50;                       //Length for truncated backpropagation through time. i.e., do parameter updates ever 50 characters
-        int nSamplesToGenerate = 4;                    //Number of samples to generate after each training epoch
-        int nCharactersToSample = 300;                //Length of each sample to generate
-        String generationInitialization = null;        //Optional character initialization; a random character is used if null
-        // Above is Used to 'prime' the LSTM with a character sequence to continue/complete.
-        // Initialization characters must all be in CharacterIterator.getMinimalCharacterSet() by default
+        int lstmLayerSize = 200;                    // 각 GravesLSTM 계층의 유닛 수
+        int tbpttLength = 50;                       // 단기 BPTT의 길이. 파라미터 업데이트를 50자까지 수행
+        int nSamplesToGenerate = 4;                    // 각 학습 에포크당 생성할 샘플 수
+        int nCharactersToSample = 300;                // 생성할 각 샘플의 길이
+        String generationInitialization = null;        // 선택적 문자 초기화. null의 경우 무작위 문자가 사용됨
+        // 위 문자 시퀀스를 사용해 LSTM을 초기화해 계속 진행/완료한다.
+        // 기본적으로 초기화 문자는 모두 CharacterIterator.getMinimalCharacterSet()중에서 사용됨
 
-        //Set up network configuration:
+        // 신경망 구성 설정
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).iterations(1)
             .learningRate(0.1)
@@ -115,7 +115,7 @@ public class SparkLSTMCharacterExample {
             .list()
             .layer(0, new GravesLSTM.Builder().nIn(CHAR_TO_INT.size()).nOut(lstmLayerSize).activation(Activation.TANH).build())
             .layer(1, new GravesLSTM.Builder().nIn(lstmLayerSize).nOut(lstmLayerSize).activation(Activation.TANH).build())
-            .layer(2, new RnnOutputLayer.Builder(LossFunction.MCXENT).activation(Activation.SOFTMAX)        //MCXENT + softmax for classification
+            .layer(2, new RnnOutputLayer.Builder(LossFunction.MCXENT).activation(Activation.SOFTMAX)        // MCXENT + 소프트맥스를 사용해 분류
                 .nIn(lstmLayerSize).nOut(nOut).build())
             .backpropType(BackpropType.TruncatedBPTT).tBPTTForwardLength(tbpttLength).tBPTTBackwardLength(tbpttLength)
             .pretrain(false).backprop(true)
@@ -123,13 +123,13 @@ public class SparkLSTMCharacterExample {
 
 
         //-------------------------------------------------------------
-        //Set up the Spark-specific configuration
-        /* How frequently should we average parameters (in number of minibatches)?
-        Averaging too frequently can be slow (synchronization + serialization costs) whereas too infrequently can result
-        learning difficulties (i.e., network may not converge) */
+        // 스파크 관련 구성 설정
+        /* 얼마나 자주 파라미터 평균화를 사용하는가(미니배치 수)?
+        너무 자주 평균화하면 속도가 느려지고(동기화 + 직렬화 비용)
+        너무 드물게 평균화하면 학습에 어려움을 겪을 수 있다 (즉, 신경망이 수렴하지 못할 수 있음) */
         int averagingFrequency = 3;
 
-        //Set up Spark configuration and context
+        // 스파크 구성 및 컨텍스트 설정
         SparkConf sparkConf = new SparkConf();
         if (useSparkLocal) {
             sparkConf.setMaster("local[*]");
@@ -140,24 +140,24 @@ public class SparkLSTMCharacterExample {
         JavaRDD<DataSet> trainingData = getTrainingData(sc);
 
 
-        //Set up the TrainingMaster. The TrainingMaster controls how learning is actually executed on Spark
-        //Here, we are using standard parameter averaging
-        //For details on these configuration options, see: https://deeplearning4j.org/spark#configuring
+        // TrainingMaster를 설정. TrainingMaster는 스파크로 학습되는 과정을 제어한다.
+        // 여기서는 기본적인 파라미터 평균화를 사용한다.
+        // 이러한 구성 옵션에 대한 자세한 내용은 https://deeplearning4j.org/spark#configuring 링크를 참고하라.
         int examplesPerDataSetObject = 1;
         ParameterAveragingTrainingMaster tm = new ParameterAveragingTrainingMaster.Builder(examplesPerDataSetObject)
-            .workerPrefetchNumBatches(2)    //Asynchronously prefetch up to 2 batches
+            .workerPrefetchNumBatches(2)    // 비동기로 배치를 최대 2개 미리 가져옴
             .averagingFrequency(averagingFrequency)
             .batchSizePerWorker(batchSizePerWorker)
             .build();
         SparkDl4jMultiLayer sparkNetwork = new SparkDl4jMultiLayer(sc, conf, tm);
         sparkNetwork.setListeners(Collections.<IterationListener>singletonList(new ScoreIterationListener(1)));
 
-        //Do training, and then generate and print samples from network
+        // 학습을 수행한 다음 신경망에서 샘플을 생성하고 출력
         for (int i = 0; i < numEpochs; i++) {
-            //Perform one epoch of training. At the end of each epoch, we are returned a copy of the trained network
+            // 에포크 하나에 대한 학습을 수행. 각 에포크가 끝나면 학습된 신경망 사본 반환
             MultiLayerNetwork net = sparkNetwork.fit(trainingData);
 
-            //Sample some characters from the network (done locally)
+            // 신경망에서 일부 문자 샘플(로컬로 수행)
             log.info("Sampling characters from network given initialization \"" +
                 (generationInitialization == null ? "" : generationInitialization) + "\"");
             String[] samples = sampleCharactersFromNetwork(generationInitialization, net, rng, INT_TO_CHAR,
@@ -168,7 +168,7 @@ public class SparkLSTMCharacterExample {
             }
         }
 
-        //Delete the temp training files, now that we are done with them
+        // 임시 학습 파일 삭제, 완료
         tm.deleteTempFiles(sc);
 
         log.info("\n\nExample complete");
@@ -176,12 +176,14 @@ public class SparkLSTMCharacterExample {
 
 
     /**
-     * Get the training data - a JavaRDD<DataSet>
-     * Note that this approach for getting training data is a special case for this example (modelling characters), and
+     * 학습 데이터 가져오기 - JavaRDD<DataSet>
+     * 아래 메소드는 특이한 방법으로 학습 데이터(모델링 문자)를 가져오고 있다.
+     * 일반적으로 CSV 등의 데이터를 로드할 때 이렇게 구현해서는 안 된다.
+     *
      * should  not be taken as best practice for loading data (like CSV etc) in general.
      */
     public static JavaRDD<DataSet> getTrainingData(JavaSparkContext sc) throws IOException {
-        //Get data. For the sake of this example, we are doing the following operations:
+        // 데이터 가져오기. 이 예제에서는 다음과 같이 작업을 수행한다.
         // File -> String -> List<String> (split into length "sequenceLength" characters) -> JavaRDD<String> -> JavaRDD<DataSet>
         List<String> list = getShakespeareAsList(exampleLength);
         JavaRDD<String> rawStrings = sc.parallelize(list);
@@ -199,7 +201,7 @@ public class SparkLSTMCharacterExample {
 
         @Override
         public DataSet call(String s) throws Exception {
-            //Here: take a String, and map the characters to a one-hot representation
+            // 여기에서 String을 가져와 문자를 one-hot 표현으로 매핑한다.
             Map<Character, Integer> cti = ctiBroadcast.getValue();
             int length = s.length();
             INDArray features = Nd4j.zeros(1, N_CHARS, length - 1);
@@ -210,7 +212,7 @@ public class SparkLSTMCharacterExample {
             for (int i = 0; i < chars.length - 2; i++) {
                 f[1] = cti.get(chars[i]);
                 f[2] = i;
-                l[1] = cti.get(chars[i + 1]);   //Predict the next character given past and current characters
+                l[1] = cti.get(chars[i + 1]);   // 이전 및 현재 문자가 주어진 다음 문자를 예측
                 l[2] = i;
 
                 features.putScalar(f, 1.0);
@@ -220,14 +222,14 @@ public class SparkLSTMCharacterExample {
         }
     }
 
-    //This function downloads (if necessary), loads and splits the raw text data into "sequenceLength" strings
+    // 이 메소드는 원본 텍스트 데이터를 (필요하다면 다운로드한 후) 불러와 sequenceLength 길이의 문자열로 분할한다.
     private static List<String> getShakespeareAsList(int sequenceLength) throws IOException {
-        //The Complete Works of William Shakespeare
-        //5.3MB file in UTF-8 Encoding, ~5.4 million characters
+        // 윌리엄 셰익스피어 전집
+        //UTF-8 인코딩된 5.3MB 파일, 문자 약 5백4십만개
         //https://www.gutenberg.org/ebooks/100
         String url = "https://s3.amazonaws.com/dl4j-distribution/pg100.txt";
         String tempDir = System.getProperty("java.io.tmpdir");
-        String fileLocation = tempDir + "/Shakespeare.txt";    //Storage location from downloaded file
+        String fileLocation = tempDir + "/Shakespeare.txt";    // 다운로드 파일 저장 경로
         File f = new File(fileLocation);
         if (!f.exists()) {
             FileUtils.copyURLToFile(new URL(url), f);
@@ -236,7 +238,7 @@ public class SparkLSTMCharacterExample {
             System.out.println("Using existing text file at " + f.getAbsolutePath());
         }
 
-        if (!f.exists()) throw new IOException("File does not exist: " + fileLocation);    //Download problem?
+        if (!f.exists()) throw new IOException("File does not exist: " + fileLocation);    // 다운로드 실패?
 
         String allData = getDataAsString(fileLocation);
 
@@ -253,8 +255,8 @@ public class SparkLSTMCharacterExample {
     }
 
     /**
-     * Load data from a file, and remove any invalid characters.
-     * Data is returned as a single large String
+     * 파일에서 데이터를 불러와 깨진 문자를 모두 제거한다.
+     * 데이터는 매우 긴 단일 문자열로 반환된다.
      */
     private static String getDataAsString(String filePath) throws IOException {
         List<String> lines = Files.readAllLines(new File(filePath).toPath(), Charset.defaultCharset());
@@ -271,23 +273,23 @@ public class SparkLSTMCharacterExample {
     }
 
     /**
-     * Generate a sample from the network, given an (optional, possibly null) initialization. Initialization
-     * can be used to 'prime' the RNN with a sequence you want to extend/continue.<br>
-     * Note that the initalization is used for all samples
+     * 주어진 initialization으로(null일 수 있음) 신경망으로부터 샘플을 생성한다.
+     * 순환신경망을 확장/학습을 지속할 때 initialization을 순환신경망을 '초기화'하는데 사용할 수 있다.
+     * initialization은 모든 샘플에서 사용된다.
      *
-     * @param initialization     String, may be null. If null, select a random character as initialization for all samples
-     * @param charactersToSample Number of characters to sample from network (excluding initialization)
+     * @param initialization     문자열, null일 수 있음. null인 경우 임의의 문자를 사용해 모든 샘플에 대한 initialization으로 사용한다.
+     * @param charactersToSample 신경망에서 샘플링할 문자 개수 (initialization 제외)
      * @param net                MultiLayerNetwork with one or more GravesLSTM/RNN layers and a softmax output layer
      */
     private static String[] sampleCharactersFromNetwork(String initialization, MultiLayerNetwork net, Random rng,
                                                         Map<Integer, Character> intToChar, int charactersToSample, int numSamples) {
-        //Set up initialization. If no initialization: use a random character
+        // initialization 설정. initialization이 null이라면 임의의 문자 사용
         if (initialization == null) {
             int randomCharIdx = rng.nextInt(intToChar.size());
             initialization = String.valueOf(intToChar.get(randomCharIdx));
         }
 
-        //Create input for initialization
+        // initialization으로 입력 생성
         INDArray initializationInput = Nd4j.zeros(numSamples, intToChar.size(), initialization.length());
         char[] init = initialization.toCharArray();
         for (int i = 0; i < init.length; i++) {
@@ -300,27 +302,27 @@ public class SparkLSTMCharacterExample {
         StringBuilder[] sb = new StringBuilder[numSamples];
         for (int i = 0; i < numSamples; i++) sb[i] = new StringBuilder(initialization);
 
-        //Sample from network (and feed samples back into input) one character at a time (for all samples)
-        //Sampling is done in parallel here
+        // 한 번에 한 문자 씩 신경망 샘플링 (샘플은 입력으로 재활용)
+        // 이 예제에서는 샘플링이 병렬로 수행된다.
         net.rnnClearPreviousState();
         INDArray output = net.rnnTimeStep(initializationInput);
-        output = output.tensorAlongDimension(output.size(2) - 1, 1, 0);    //Gets the last time step output
+        output = output.tensorAlongDimension(output.size(2) - 1, 1, 0);    // 마지막 시간 단계의 출력 가져오기
 
         for (int i = 0; i < charactersToSample; i++) {
-            //Set up next input (single time step) by sampling from previous output
+            // 이전 출력에서 샘플링해 다음 입력(시간 단계 한 개) 설정
             INDArray nextInput = Nd4j.zeros(numSamples, intToChar.size());
-            //Output is a probability distribution. Sample from this for each example we want to generate, and add it to the new input
+            // 출력은 확률 분포다. 생성하고자 하는 각 입력 데이터마다 출력(확률 분포)를 샘플링해 새로운 입력에 추가
             for (int s = 0; s < numSamples; s++) {
                 double[] outputProbDistribution = new double[intToChar.size()];
                 for (int j = 0; j < outputProbDistribution.length; j++)
                     outputProbDistribution[j] = output.getDouble(s, j);
                 int sampledCharacterIdx = sampleFromDistribution(outputProbDistribution, rng);
 
-                nextInput.putScalar(new int[]{s, sampledCharacterIdx}, 1.0f);        //Prepare next time step input
-                sb[s].append(intToChar.get(sampledCharacterIdx));    //Add sampled character to StringBuilder (human readable output)
+                nextInput.putScalar(new int[]{s, sampledCharacterIdx}, 1.0f);        // 다음 시간 단계의 입력을 준비
+                sb[s].append(intToChar.get(sampledCharacterIdx));    // 출력(샘플링 된 문자 색인)을 사람이 읽을 수 있는 문자로 변환해 StringBuilder에 추가
             }
 
-            output = net.rnnTimeStep(nextInput);    //Do one time step of forward pass
+            output = net.rnnTimeStep(nextInput);    // 다음 시간 단계를 수행
         }
 
         String[] out = new String[numSamples];
@@ -329,10 +331,9 @@ public class SparkLSTMCharacterExample {
     }
 
     /**
-     * Given a probability distribution over discrete classes, sample from the distribution
-     * and return the generated class index.
+     * 불연속 클래스에 대한 확률 분포가 주어지면 분포로부터 클래스 색인 하나를 샘플링해 반환한다.
      *
-     * @param distribution Probability distribution over classes. Must sum to 1.0
+     * @param distribution 클래스 확률 분포. 합이 1.0이어야 함
      */
     private static int sampleFromDistribution(double[] distribution, Random rng) {
         double d = rng.nextDouble();
@@ -341,12 +342,12 @@ public class SparkLSTMCharacterExample {
             sum += distribution[i];
             if (d <= sum) return i;
         }
-        //Should never happen if distribution is a valid probability distribution
+        // 확률 분포가 유효하다면 이 줄은 결코 실행되지 않는다.
         throw new IllegalArgumentException("Distribution is invalid? d=" + d + ", sum=" + sum);
     }
 
     /**
-     * A minimal character set, with a-z, A-Z, 0-9 and common punctuation etc
+     * a-z, A-Z, 0-9, 구두점 등으로 구성된 약식 문자셋
      */
     private static char[] getValidCharacters() {
         List<Character> validChars = new LinkedList<>();

@@ -29,21 +29,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Train a simple/small MLP on MNIST data using Spark, then evaluate it on the test set in a distributed manner
+ * 스파크를 사용해 MNIST 데이터로 간단한 소규모 다층 퍼셉트론을 학습하고, 분산 관점에서 테스트셋으로 평가한다.
  *
- * Note that the network being trained here is too small to make proper use of Spark - but it shows the configuration
- * and evaluation used for Spark training.
+ * 이 예제의 신경망은 작아서 굳이 스파크를 사용할 필요가 없지만 - 스파크 학습을 평가하는 방법과 구성을 보기에 적절하다.
  *
  *
- * To run the example locally: Run the example as-is. The example is set up to use Spark local by default.
- * NOTE: Spark local should only be used for development/testing. For data parallel training on a single machine
- * (for example, multi-GPU systems) instead use ParallelWrapper (which is faster than using Spark for training on a single machine).
- * See for example MultiGpuLenetMnistExample in dl4j-cuda-specific-examples
+ * 예제를 로컬에서 돌리고 싶다면 예제를 그대로 실행하면 된다. 이 예제는 기본적으로 스파크 로컬에서 실행하도록 구성되어 있다.
+ * 주의: 스파크 로컬은 개발/테스트 용으로만 사용해야 한다. 대신 (다중 GPU 시스템 같은) 단일 머신에서 데이터를 병렬 학습시킬 때는
+ * ParallelWrapper를 사용하라 (단일 머신에서 스파크를 사용할 때보다 빠르다).
+ * dl4j-cuda-specific-examples에서 MultiGpuLenetMnistExample을 참고하라.
  *
- * To run the example using Spark submit (for example on a cluster): pass "-useSparkLocal false" as the application argument,
- *   OR first modify the example by setting the field "useSparkLocal = false"
+ * (클러스터에서 실행하기 위해) 스파크 서브밋을 사용해 예제를 실행시키고 싶다면 "-useParkLocal false"를 애플리케이션 매개변수에 포함시키거나,
+ * 예제 앞 부분의 필드를 "useSparkLocal = false"로 설정하라.
  *
- * @author Alex Black
+ * @author 알렉스 블랙
  */
 public class MnistMLPExample {
     private static final Logger log = LoggerFactory.getLogger(MnistMLPExample.class);
@@ -62,12 +61,12 @@ public class MnistMLPExample {
     }
 
     protected void entryPoint(String[] args) throws Exception {
-        //Handle command line arguments
+        // 명령줄 인자 다루기
         JCommander jcmdr = new JCommander(this);
         try {
             jcmdr.parse(args);
         } catch (ParameterException e) {
-            //User provides invalid input -> print the usage info
+            // 사용자가 잘못 입력함 -> 사용법 출력
             jcmdr.usage();
             try { Thread.sleep(500); } catch (Exception e2) { }
             throw e;
@@ -80,8 +79,8 @@ public class MnistMLPExample {
         sparkConf.setAppName("DL4J Spark MLP Example");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
-        //Load the data into memory then parallelize
-        //This isn't a good approach in general - but is simple to use for this example
+        // 데이터를 메모리에 불러온 다음 병렬 처리
+        // 올바른 사용법은 아니지만 예제 구현이 간단해진다.
         DataSetIterator iterTrain = new MnistDataSetIterator(batchSizePerWorker, true, 12345);
         DataSetIterator iterTest = new MnistDataSetIterator(batchSizePerWorker, true, 12345);
         List<DataSet> trainDataList = new ArrayList<>();
@@ -98,7 +97,7 @@ public class MnistMLPExample {
 
 
         //----------------------------------
-        //Create network configuration and conduct network training
+        // 신경망 구성 및 신경망 학습 시작
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
             .seed(12345)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).iterations(1)
@@ -115,28 +114,28 @@ public class MnistMLPExample {
             .pretrain(false).backprop(true)
             .build();
 
-        //Configuration for Spark training: see http://deeplearning4j.org/spark for explanation of these configuration options
-        TrainingMaster tm = new ParameterAveragingTrainingMaster.Builder(batchSizePerWorker)    //Each DataSet object: contains (by default) 32 examples
+        // 스파크 학습 구성 : 옵션에 대한 설명은 http://deeplearning4j.org/spark 참고
+        TrainingMaster tm = new ParameterAveragingTrainingMaster.Builder(batchSizePerWorker)    // 각 DataSet 객체는 기본적으로 입력 데이터 32개를 포함
             .averagingFrequency(5)
-            .workerPrefetchNumBatches(2)            //Async prefetching: 2 examples per worker
+            .workerPrefetchNumBatches(2)            // 비동기로 입력 데이터를 워커당 2개씩 미리 가져옴
             .batchSizePerWorker(batchSizePerWorker)
             .build();
 
-        //Create the Spark network
+        // 스파크 신경망 생성
         SparkDl4jMultiLayer sparkNet = new SparkDl4jMultiLayer(sc, conf, tm);
 
-        //Execute training:
+        // 학습 실행
         for (int i = 0; i < numEpochs; i++) {
             sparkNet.fit(trainData);
             log.info("Completed Epoch {}", i);
         }
 
-        //Perform evaluation (distributed)
+        // 평가 수행 (분산)
         Evaluation evaluation = sparkNet.evaluate(testData);
         log.info("***** Evaluation *****");
         log.info(evaluation.stats());
 
-        //Delete the temp training files, now that we are done with them
+        // 임시 학습 파일 삭제, 완료
         tm.deleteTempFiles(sc);
 
         log.info("***** Example Complete *****");

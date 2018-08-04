@@ -32,24 +32,23 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This example is designed to show how to use DL4J's Spark training benchmarking/debugging/timing functionality.
- * For details: See https://deeplearning4j.org/spark#sparkstats
+ * 이 예제는 DL4J의 스파크 학습 벤치마킹 / 디버깅 / 타이밍 기능을 사용하는 법을 보여준다.
+ * 자세한 내용은 https://deeplearning4j.org/spark#sparkstats을 참고하라.
  *
- * The idea with this tool is to capture statistics on various aspects of Spark training, in order to identify
- * and debug performance issues.
+ * 이 도구는 성능 문제가 있는지 판별하고 디버그하기 위해 스파크 학습의 다양한 측면에서 통계를 수집한다.
  *
- * For the sake of the example, we will be using a network configuration and data as per the SparkLSTMCharacterExample.
+ * 이 예제에서는 SparkLSTMCharacterExample의 신경망 구성과 데이터를 사용한다.
  *
  *
- * To run the example locally: Run the example as-is. The example is set up to use Spark local.
+ * 예제를 로컬에서 돌리고 싶다면 예제를 그대로 실행하면 된다. 이 예제는 기본적으로 스파크 로컬에서 실행하도록 구성되어 있다.
  *
- * To run the example using Spark submit (for example on a cluster): pass "-useSparkLocal false" as the application argument,
- *   OR first modify the example by setting the field "useSparkLocal = false"
+ * (클러스터에서 실행하기 위해) 스파크 서브밋을 사용해 예제를 실행시키고 싶다면 "-useParkLocal false"를 애플리케이션 매개변수에 포함시키거나,
+ * 예제 앞 부분의 필드를 "useSparkLocal = false"로 설정하라.
  *
- * NOTE: On some clusters without internet access, this example may fail with "Error querying NTP server"
- * See: https://deeplearning4j.org/spark#sparkstatsntp
+ * 주의: 인터넷에 접근할 수 없는 일부 클러스터에서는 "Error querying NTP server" 오류 메세지와 함께 예제가 실패할 수 있다.
+ * 참고: https://deeplearning4j.org/spark#sparkstatsntp
  *
- * @author Alex Black
+ * @author 알렉스 블랙
  */
 public class TrainingStatsExample {
     private static final Logger log = LoggerFactory.getLogger(TrainingStatsExample.class);
@@ -62,26 +61,26 @@ public class TrainingStatsExample {
     }
 
     private void entryPoint(String[] args) throws Exception {
-        //Handle command line arguments
+        // 명령줄 인자 다루기
         JCommander jcmdr = new JCommander(this);
         try{
             jcmdr.parse(args);
         } catch(ParameterException e){
-            //User provides invalid input -> print the usage info
+            // 사용자가 잘못 입력함 -> 사용법 출력
             jcmdr.usage();
             try{ Thread.sleep(500); } catch(Exception e2){ }
             throw e;
         }
 
 
-        //Set up network configuration:
+        // 신경망 구성 설정
         MultiLayerConfiguration config = getConfiguration();
 
-        //Set up the Spark-specific configuration
-        int examplesPerWorker = 8;      //i.e., minibatch size that each worker gets
-        int averagingFrequency = 3;     //Frequency with which parameters are averaged
+        // 스파크 관련 구성 설정
+        int examplesPerWorker = 8;      //쉽게 말해 각 워커(익스큐터)가 처리할 미니 배치 크기
+        int averagingFrequency = 3;     //매개 변수가 평균화되는 빈도
 
-        //Set up Spark configuration and context
+        // 스파크 구성 및 컨텍스트 설정
         SparkConf sparkConf = new SparkConf();
         if(useSparkLocal){
             sparkConf.setMaster("local[*]");
@@ -90,39 +89,39 @@ public class TrainingStatsExample {
         sparkConf.setAppName("DL4J Spark Stats Example");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
-        //Get data. See SparkLSTMCharacterExample for details
+        //데이터 가져오기. 자세한 설명은 SparkLSTMCharacterExample 참고
         JavaRDD<DataSet> trainingData = SparkLSTMCharacterExample.getTrainingData(sc);
 
-        //Set up the TrainingMaster. The TrainingMaster controls how learning is actually executed on Spark
-        //Here, we are using standard parameter averaging
-        int examplesPerDataSetObject = 1;   //We haven't pre-batched our data: therefore each DataSet object contains 1 example
+        // TrainingMaster를 설정. TrainingMaster는 스파크로 학습되는 과정을 제어한다.
+        // 여기서는 기본적인 파라미터 평균화를 사용한다.
+        int examplesPerDataSetObject = 1;   // 데이터를 미리 배치화하지 않았다. 따라서 각 DataSet 객체는 입력 데이터 한개를 포함한다.
         ParameterAveragingTrainingMaster tm = new ParameterAveragingTrainingMaster.Builder(examplesPerDataSetObject)
-                .workerPrefetchNumBatches(2)    //Async prefetch 2 batches for each worker
+                .workerPrefetchNumBatches(2)    // 비동기로 배치를 최대 2개 미리 가져옴
                 .averagingFrequency(averagingFrequency)
                 .batchSizePerWorker(examplesPerWorker)
                 .build();
 
-        //Create the Spark network
+        // 스파크 신경망 생성
         SparkDl4jMultiLayer sparkNetwork = new SparkDl4jMultiLayer(sc, config, tm);
 
-        //*** Tell the network to collect training statistics. These will NOT be collected by default ***
+        // *** 학습 통계를 수집하도록 신경망 설정. 기본적으로는 학습 통계를 수집하지 않음 ***
         sparkNetwork.setCollectTrainingStats(true);
 
-        //Fit for 1 epoch:
+        // 에포크 하나에 대한 학습을 수행
         sparkNetwork.fit(trainingData);
 
-        //Delete the temp training files, now that we are done with them (if fitting for multiple epochs: would be re-used)
+        // 다 사용한 임시 학습 파일 삭제, (에포크 여러개에 대한 학습을 수행할 경우 재사용됨)
         tm.deleteTempFiles(sc);
 
-        //Get the statistics:
+        // 통계 가져오기
         SparkTrainingStats stats = sparkNetwork.getSparkTrainingStats();
-        Set<String> statsKeySet = stats.getKeySet();    //Keys for the types of statistics
+        Set<String> statsKeySet = stats.getKeySet();    // 통계 유형별 키
         System.out.println("--- Collected Statistics ---");
         for(String s : statsKeySet){
             System.out.println(s);
         }
 
-        //Demo purposes: get one statistic and print it
+        // 데모 목적: 통계 하나를 가져와 출력
         String first = statsKeySet.iterator().next();
         List<EventStats> firstStatEvents = stats.getValue(first);
         EventStats es = firstStatEvents.get(0);
@@ -133,7 +132,7 @@ public class TrainingStatsExample {
         log.info("Start time ms:  " + es.getStartTime());
         log.info("Duration ms:    " + es.getDurationMs());
 
-        //Export a HTML file containing charts of the various stats calculated during training
+        // 학습 과정에서 계산된 다양한 통계 차트를 포함하는 HTML 내보내기
         StatsUtils.exportStatsAsHtml(stats, "SparkStats.html",sc);
         log.info("Training stats exported to {}", new File("SparkStats.html").getAbsolutePath());
 
@@ -141,16 +140,16 @@ public class TrainingStatsExample {
     }
 
 
-    //Configuration for the network we will be training
+    // 학습할 신경망 구성
     private static MultiLayerConfiguration getConfiguration(){
-        int lstmLayerSize = 200;					//Number of units in each GravesLSTM layer
-        int tbpttLength = 50;                       //Length for truncated backpropagation through time. i.e., do parameter updates ever 50 characters
+        int lstmLayerSize = 200;					// 각 GravesLSTM 계층의 유닛 수
+        int tbpttLength = 50;                       // 단기 BPTT의 길이. 파라미터 업데이트를 50자까지 수행
 
         Map<Character, Integer> CHAR_TO_INT = SparkLSTMCharacterExample.getCharToInt();
         int nIn = CHAR_TO_INT.size();
         int nOut = CHAR_TO_INT.size();
 
-        //Set up network configuration:
+        // 신경망 구성 설정
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).iterations(1)
             .learningRate(0.1)
@@ -161,7 +160,7 @@ public class TrainingStatsExample {
             .list()
             .layer(0, new GravesLSTM.Builder().nIn(nIn).nOut(lstmLayerSize).activation(Activation.TANH).build())
             .layer(1, new GravesLSTM.Builder().nIn(lstmLayerSize).nOut(lstmLayerSize).activation(Activation.TANH).build())
-            .layer(2, new RnnOutputLayer.Builder(LossFunctions.LossFunction.MCXENT).activation(Activation.SOFTMAX)        //MCXENT + softmax for classification
+            .layer(2, new RnnOutputLayer.Builder(LossFunctions.LossFunction.MCXENT).activation(Activation.SOFTMAX)        // MCXENT + 소프트맥스를 사용해 분류
                 .nIn(lstmLayerSize).nOut(nOut).build())
             .backpropType(BackpropType.TruncatedBPTT).tBPTTForwardLength(tbpttLength).tBPTTBackwardLength(tbpttLength)
             .pretrain(false).backprop(true)
