@@ -9,15 +9,15 @@ import org.deeplearning4j.ui.stats.StatsListener;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 
 /**
- * A version of UIExample that shows how you can host the UI in a different JVM to the
+ * 다른 JVM에서 UI를 호스팅하는 방법을 보여주는 예제. 
  *
- * For the case of this example, both are done in the same JVM. See comments for what goes in each JVM in practice.
+ * 이 예제의 경우 동일한 JVM에서 수행 됨. 실제로 서로 다른 JVM에서 수행하기 위해서 주석 참고. 
  *
- * NOTE: Don't use this unless you *actually* need the UI to be hosted in a separate JVM for training.
- *       For a single JVM, this approach will be slower than doing it the normal way
+ * 참고: UI를 꼭 분리된 JVM에서 호스팅 해야 되는 경우가 아니라면 본 예제를 사용하지 마세요. 
+ *      단일 JVM인 경우 일반적인 방법보다 아래의 예제가 느릴 수 있습니다. 
  *
- * To change the UI port (usually not necessary) - set the org.deeplearning4j.ui.port system property
- * i.e., run the example and pass the following to the JVM, to use port 9001: -Dorg.deeplearning4j.ui.port=9001
+ * UI포트를 변경하려면(일반적으로는 할 필요 없음) : set the org.deeplearning4j.ui.port 
+ * 즉, 다음 설정을 이용해서 예제를 실행하고 9001포트를 사용하도록 JVM에 전달하면 된다.  -Dorg.deeplearning4j.ui.port=9001
  *
  * @author Alex Black
  */
@@ -25,26 +25,26 @@ public class RemoteUIExample {
 
     public static void main(String[] args){
 
-        //------------ In the first JVM: Start the UI server and enable remote listener support ------------
-        //Initialize the user interface backend
+        //------------ 첫 번째 JVM: UI 서버를 시작하고 원격 리스너 지원 활성화. ------------
+        //UI 백엔드 초기화 
         UIServer uiServer = UIServer.getInstance();
-        uiServer.enableRemoteListener();        //Necessary: remote support is not enabled by default
-        //uiServer.enableRemoteListener(new FileStatsStorage(new File("myFile.dl4j")), true);       //Alternative: persist them to disk
+        uiServer.enableRemoteListener();        //필수: 원격 지원은 기본적으로 비활성화 되어 있음. 
+        //uiServer.enableRemoteListener(new FileStatsStorage(new File("myFile.dl4j")), true);       //디스크에 저장해도 됨.
 
 
-        //------------ In the second JVM: Perform training ------------
+        //------------ 두 번째 JVM: 학습 수행 ------------
 
-        //Get our network and training data
+        //신경망과 학습 데이터 
         MultiLayerNetwork net = UIExampleUtils.getMnistNetwork();
         DataSetIterator trainData = UIExampleUtils.getMnistData();
 
-        //Create the remote stats storage router - this sends the results to the UI via HTTP, assuming the UI is at http://localhost:9000
+        //원격 상태 저장소 라우터 생성. 결과를 HTTP를 이용해서 UI로 보낸다. UI는 http://localhost:9000를 가정. 
         StatsStorageRouter remoteUIRouter = new RemoteUIStatsStorageRouter("http://localhost:9000");
         net.setListeners(new StatsListener(remoteUIRouter));
 
-        //Start training:
+        //학습 시작 
         net.fit(trainData);
 
-        //Finally: open your browser and go to http://localhost:9000/train
+        //마지막으로 브라우저를 열고 http://localhost:9000/train 에 접속. 
     }
 }

@@ -13,8 +13,7 @@ import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import java.io.File;
 
 /**
- * A version of UIStorageExample showing how to saved network training data to a file, and then
- * reload it later, to display in in the UI
+ * UIStorageExample은 네트워크 학습 데이터를 파일에 저장하고, 이후에 다시 로드하여 UI에 보여주는 방법을 나타내는 예제임.
  *
  * @author Alex Black
  */
@@ -22,14 +21,14 @@ public class UIStorageExample {
 
     public static void main(String[] args){
 
-        //Run this example twice - once with collectStats = true, and then again with collectStats = false
+        //이 예제를 두 번 실행하세요. 한 번은 collectStats = true로 그 이후 collectStats = false로 한 번 더 실행. 
         boolean collectStats = true;
 
         File statsFile = new File("UIStorageExampleStats.dl4j");
 
         if(collectStats){
-            //First run: Collect training stats from the network
-            //Note that we don't have to actually plot it when we collect it - though we can do that too, if required
+            //최초 실행: 네트워크에서 학습 상태 수집 
+            //수집 단계에서는 실제로 그릴 필요는 없지만, 필요하다면 그릴 수도 있음. 
 
             MultiLayerNetwork net = UIExampleUtils.getMnistNetwork();
             DataSetIterator trainData = UIExampleUtils.getMnistData();
@@ -41,9 +40,9 @@ public class UIStorageExample {
 
             System.out.println("Done");
         } else {
-            //Second run: Load the saved stats and visualize. Go to http://localhost:9000/train
+            //두 번째 실행: 저장된 상테를 로드해서 시각화. http://localhost:9000/train 접속. 
 
-            StatsStorage statsStorage = new FileStatsStorage(statsFile);    //If file already exists: load the data from it
+            StatsStorage statsStorage = new FileStatsStorage(statsFile);    //파일이 이미 존재한다면, 파일에서 부터 데이터 로드.
             UIServer uiServer = UIServer.getInstance();
             uiServer.attach(statsStorage);
         }

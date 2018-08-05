@@ -9,10 +9,10 @@ import org.deeplearning4j.ui.storage.InMemoryStatsStorage;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 
 /**
- * A simple example of how to attach Deeplearning4j's training UI to a network
+ * Deeplearning4j's 학습 UI를 네트워크에 연결하는 방법을 배울 수 있는 간단한 예제.
  *
- * To change the UI port (usually not necessary) - set the org.deeplearning4j.ui.port system property
- * i.e., run the example and pass the following to the JVM, to use port 9001: -Dorg.deeplearning4j.ui.port=9001
+ * UI포트를 변경하려면(일반적으로는 할 필요 없음) : set the org.deeplearning4j.ui.port 
+ * 즉, 다음 설정을 이용해서 예제를 실행하고 9001포트를 사용하도록 JVM에 전달하면 된다. -Dorg.deeplearning4j.ui.port=9001
  *
  * @author Alex Black
  */
@@ -20,25 +20,25 @@ public class UIExample {
 
     public static void main(String[] args){
 
-        //Get our network and training data
+        //신경망과 학습데이터 
         MultiLayerNetwork net = UIExampleUtils.getMnistNetwork();
         DataSetIterator trainData = UIExampleUtils.getMnistData();
 
-        //Initialize the user interface backend
+        //UI 백엔드 초기화 
         UIServer uiServer = UIServer.getInstance();
 
-        //Configure where the network information (gradients, activations, score vs. time etc) is to be stored
-        //Then add the StatsListener to collect this information from the network, as it trains
-        StatsStorage statsStorage = new InMemoryStatsStorage();             //Alternative: new FileStatsStorage(File) - see UIStorageExample
+        //신경망 정보 저장 공간 설정 (경사도, 활성화, 점수 vs. 시간 등)
+        //그 후 StatsListener를 이용해서 신경망에서 정보 수집.
+        StatsStorage statsStorage = new InMemoryStatsStorage();             //new FileStatsStorage(File) 사용 가능(UIStorageExample 예제 참고) 
         int listenerFrequency = 1;
         net.setListeners(new StatsListener(statsStorage, listenerFrequency));
 
-        //Attach the StatsStorage instance to the UI: this allows the contents of the StatsStorage to be visualized
+        //StatsStorage 인스턴스를 UI에 연결하여 담긴 내용을 시각화.
         uiServer.attach(statsStorage);
 
-        //Start training:
+        //학습 시작. 
         net.fit(trainData);
 
-        //Finally: open your browser and go to http://localhost:9000/train
+        //마지막으로 브라우저를 열고 http://localhost:9000/train 에 접속. 
     }
 }

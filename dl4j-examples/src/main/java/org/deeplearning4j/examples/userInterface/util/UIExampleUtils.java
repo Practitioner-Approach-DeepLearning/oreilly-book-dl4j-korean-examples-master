@@ -25,14 +25,14 @@ public class UIExampleUtils {
 
     public static MultiLayerNetwork getMnistNetwork(){
 
-        int nChannels = 1; // Number of input channels
-        int outputNum = 10; // The number of possible outcomes
-        int iterations = 1; // Number of training iterations
+        int nChannels = 1; // 입력 채널 수
+        int outputNum = 10; // 가능한 출력 수
+        int iterations = 1; // 학습 반복 단계 수
         int seed = 123; //
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
             .seed(seed)
-            .iterations(iterations) // Training iterations as above
+            .iterations(iterations) // 위와 같이 반복 학습 
             .regularization(true).l2(0.0005)
             .learningRate(0.01)
             .weightInit(WeightInit.XAVIER)
@@ -40,7 +40,7 @@ public class UIExampleUtils {
             .updater(Updater.NESTEROVS).momentum(0.9)
             .list()
             .layer(0, new ConvolutionLayer.Builder(5, 5)
-                //nIn and nOut specify depth. nIn here is the nChannels and nOut is the number of filters to be applied
+                //nIn 과 nOut 은 깊이를 지정함. nIn은 nChannels이고, nOut 은 적용할 필터의 갯수임.
                 .nIn(nChannels)
                 .stride(1, 1)
                 .nOut(20)
@@ -51,7 +51,7 @@ public class UIExampleUtils {
                 .stride(2,2)
                 .build())
             .layer(2, new ConvolutionLayer.Builder(5, 5)
-                //Note that nIn need not be specified in later layers
+                //이후의 계층에서는 nIn을 지정할 필요가 없음.
                 .stride(1, 1)
                 .nOut(50)
                 .activation(Activation.LEAKYRELU)
