@@ -60,13 +60,13 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- ND4J backend. You need one in every DL4J project. Normally define artifactId as either "nd4j-native-platform" or "nd4j-cuda-7.5-platform" -->
+        <!-- ND4J 백엔드. 모든 DL4J 프로젝트에 하나씩 필요함. 보통 artifactId는 "nd4j-native-platform" 또는 "nd4j-cuda-7.5-platform" 로 정의함. -->
         <dependency>
             <groupId>org.nd4j</groupId>
             <artifactId>${nd4j.backend}</artifactId>
         </dependency>
 
-        <!-- Core DL4J functionality -->
+        <!-- core DL4J -->
         <dependency>
             <groupId>org.deeplearning4j</groupId>
             <artifactId>deeplearning4j-core</artifactId>
@@ -79,28 +79,28 @@
             <version>${dl4j.version}</version>
         </dependency>
 
-        <!-- deeplearning4j-ui is used for HistogramIterationListener + visualization: see http://deeplearning4j.org/visualization -->
+        <!-- deeplearning4j-ui : HistogramIterationListener + 시각화에 사용됨. http://deeplearning4j.org/visualization 참고. -->
         <dependency>
             <groupId>org.deeplearning4j</groupId>
             <artifactId>deeplearning4j-ui_2.10</artifactId>
             <version>${dl4j.version}</version>
         </dependency>
 
-        <!-- Force guava versions for using UI/HistogramIterationListener -->
+        <!-- UI/HistogramIterationListener 사용을 위한 guava 버전 -->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
         </dependency>
 
-        <!-- datavec-data-codec: used only in video example for loading video data -->
+        <!-- datavec-data-codec: 비디오 데이터 로딩에 사용됨. (비디오 예제에만 사용) -->
         <dependency>
             <artifactId>datavec-data-codec</artifactId>
             <groupId>org.datavec</groupId>
             <version>${datavec.version}</version>
         </dependency>
 
-        <!-- Used in the feedforward/classification/MLP* and feedforward/regression/RegressionMathFunctions example -->
+        <!-- feedforward/classification/MLP* , feedforward/regression/RegressionMathFunctions 예제에 사용 됨. -->
         <dependency>
             <groupId>jfree</groupId>
             <artifactId>jfreechart</artifactId>
@@ -112,7 +112,7 @@
             <version>${jcommon.version}</version>
         </dependency>
 
-        <!-- Used for downloading data in some of the examples -->
+        <!-- 몇몇 예제에서 데이터를 다운로드 할 때 사용. -->
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
