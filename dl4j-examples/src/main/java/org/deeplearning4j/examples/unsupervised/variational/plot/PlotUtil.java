@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Plotting methods for the VariationalAutoEncoder example
+ * VAE 예제 플롯팅 함수 
  * @author Alex Black
  */
 public class PlotUtil {
@@ -66,7 +66,7 @@ public class PlotUtil {
         return "MNIST Test Set - Latent Space Encoding at Training Iteration " + recordNumber * plotFrequency;
     }
 
-    //Test data
+    //Test 데이터
     private static XYDataset createDataSet(INDArray features, INDArray labelsOneHot){
         int nRows = features.rows();
 
@@ -139,7 +139,7 @@ public class PlotUtil {
 
     public static class MNISTLatentSpaceVisualizer {
         private double imageScale;
-        private List<INDArray> digits;  //Digits (as row vectors), one per INDArray
+        private List<INDArray> digits;  //숫자 (행 벡터), INDArray 당 하나. 
         private int plotFrequency;
         private int gridWidth;
 
@@ -147,7 +147,7 @@ public class PlotUtil {
             this.imageScale = imageScale;
             this.digits = digits;
             this.plotFrequency = plotFrequency;
-            this.gridWidth = (int)Math.sqrt(digits.get(0).size(0)); //Assume square, nxn rows
+            this.gridWidth = (int)Math.sqrt(digits.get(0).size(0)); //n x n 사각형 가정
         }
 
         private String getTitle(int recordNumber){
