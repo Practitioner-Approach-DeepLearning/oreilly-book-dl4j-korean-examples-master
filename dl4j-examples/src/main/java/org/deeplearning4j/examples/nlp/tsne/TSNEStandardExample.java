@@ -20,31 +20,31 @@ import java.util.List;
 /**
  * Created by agibsonccc on 9/20/14.
  *
- * Dimensionality reduction for high-dimension datasets
+ * 고차원 데이터셋의 차원 축소. 
  */
 public class TSNEStandardExample {
 
     private static Logger log = LoggerFactory.getLogger(TSNEStandardExample.class);
 
     public static void main(String[] args) throws Exception  {
-        //STEP 1: Initialization
+        //1 단계 : 초기화 
         int iterations = 100;
-        //create an n-dimensional array of doubles
+        //double 값을 가지는 n차원 배열 생성 
         DataTypeUtil.setDTypeForContext(DataBuffer.Type.DOUBLE);
-        List<String> cacheList = new ArrayList<>(); //cacheList is a dynamic array of strings used to hold all words
+        List<String> cacheList = new ArrayList<>(); // cacheList는 모든 단어를 담는데 사용되는 string 동적 배열이다. 
 
-        //STEP 2: Turn text input into a list of words
+        //2 단계 : 텍스트 입력을 단어의 리스트로 변환 
         log.info("Load & Vectorize data....");
-        File wordFile = new ClassPathResource("words.txt").getFile();   //Open the file
-        //Get the data of all unique word vectors
+        File wordFile = new ClassPathResource("words.txt").getFile();   //파일 열기 
+        //모든 고유 단어 벡터 데이터 가져오기 
         Pair<InMemoryLookupTable,VocabCache> vectors = WordVectorSerializer.loadTxt(wordFile);
         VocabCache cache = vectors.getSecond();
-        INDArray weights = vectors.getFirst().getSyn0();    //seperate weights of unique words into their own list
+        INDArray weights = vectors.getFirst().getSyn0();    //각 단어의 가중치를 각각의 리스트로 분리 
 
-        for(int i = 0; i < cache.numWords(); i++)   //seperate strings of words into their own list
+        for(int i = 0; i < cache.numWords(); i++)   //각 단어의 문자를 각각의 리스트로 분리 
             cacheList.add(cache.wordAtIndex(i));
 
-        //STEP 3: build a dual-tree tsne to use later
+        //3 단계 : 사용할 이중 트리 tsne 생성 
         log.info("Build model....");
         BarnesHutTsne tsne = new BarnesHutTsne.Builder()
                 .setMaxIter(iterations).theta(0.5)
@@ -54,17 +54,17 @@ public class TSNEStandardExample {
 //                .usePca(false)
                 .build();
 
-        //STEP 4: establish the tsne values and save them to a file
+        //4 단계 : tsne 값을 설정하고 파일에 저장하기 
         log.info("Store TSNE Coordinates for Plotting....");
         String outputFile = "target/archive-tmp/tsne-standard-coords.csv";
         (new File(outputFile)).getParentFile().mkdirs();
         tsne.plot(weights,2,cacheList,outputFile);
-        //This tsne will use the weights of the vectors as its matrix, have two dimensions, use the words strings as
-        //labels, and be written to the outputFile created on the previous line
-        // Plot Data with gnuplot
-        // set datafile separator ","
-        // plot 'tsne-standard-coords.csv' using 1:2:3 with labels font "Times,8"
-        //!!! Possible error: plot was recently deprecated. Might need to re-do the last line
+        //tnse는 행렬 벡터의 가중치를 사용하고 차원 두개를 가지며 단어 문자를 레이블로 가진다. 
+        //이전 단계에서 생성한 outputFile에 기록됨. 
+        // gnuplot 를 이용해서 그래프를 그릴수 있음. 
+        // 데이터 파일의 구분자는 ","
+        // 레이블 폰트는 "Times,8"로 지정하여 'tsne-standard-coords.csv' 파일을 그래프로 그려보자. 
+        //!!! plot은 최근에 지원 중단 되었기 때문에 가장 마지막 줄을 다시 실행해야 할 수도 있다. 
     }
 
 

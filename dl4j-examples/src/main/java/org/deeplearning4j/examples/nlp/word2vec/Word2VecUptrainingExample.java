@@ -18,12 +18,10 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 
 /**
- * This is simple example for model weights update after initial vocab building.
- * If you have built your w2v model, and some time later you've decided that it can be
- * additionally trained over new corpus, here's an example how to do it.
+ * 최초 어휘 구축 후 모델 가중치를 업데이트 하는 예제. 
+ * w2v 모델 구축 후 새로운 코퍼스 학습이 필요하다면 본 예제를 참고하자. 
  *
- * PLEASE NOTE: At this moment, no new words will be added to vocabulary/model.
- * Only weights update process will be issued. It's often called "frozen vocab training".
+ * 주의 : 새로운 단어는 어휘나 모델에 추가되지 않는다. 단지, 가중치 업데이트만 수행하기 때문에 종종 "frozen vocab training"으로 불린다. 
  *
  * @author raver119@gmail.com
  */
@@ -33,19 +31,18 @@ public class Word2VecUptrainingExample {
 
     public static void main(String[] args) throws Exception {
         /*
-                Initial model training phase
+                초기 모델 학습 단계 
          */
         String filePath = new ClassPathResource("raw_sentences.txt").getFile().getAbsolutePath();
 
         log.info("Load & Vectorize Sentences....");
-        // Strip white space before and after for each line
+        // 각 라인의 양 끝 공란을 삭제
         SentenceIterator iter = new BasicLineIterator(filePath);
-        // Split on white spaces in the line to get words
+        // 공란을 기준으로 문장을 분리하여 라인에서 각 단어를 구분해 냄. 
         TokenizerFactory t = new DefaultTokenizerFactory();
         t.setTokenPreProcessor(new CommonPreprocessor());
 
-        // manual creation of VocabCache and WeightLookupTable usually isn't necessary
-        // but in this case we'll need them
+        // VocabCache와 WeightLookupTable를 수동으로 생성하는 것은 잘 사용되지 않지만 이 경우에는 필요함. 
         InMemoryLookupCache cache = new InMemoryLookupCache();
         WeightLookupTable<VocabWord> table = new InMemoryLookupTable.Builder<VocabWord>()
                 .vectorLength(100)
@@ -75,18 +72,18 @@ public class Word2VecUptrainingExample {
         log.info("Closest words to 'day' on 1st run: " + lst);
 
         /*
-            at this moment we're supposed to have model built, and it can be saved for future use.
+            모델을 생성하고 나중에 사용할 수 있도록 저장. 
          */
         WordVectorSerializer.writeFullModel(vec, "pathToSaveModel.txt");
 
         /*
-            Let's assume that some time passed, and now we have new corpus to be used to weights update.
-            Instead of building new model over joint corpus, we can use weights update mode.
+            시간이 지났다고 가정하고 새로운 코퍼스를 사용해서 가중치를 업데이트 해 보자. 
+            추가된 코퍼스를 위해 모델을 구축하는 대신에 가중치 업데이트 모드를 이용할 수 있다. 
          */
         Word2Vec word2Vec = WordVectorSerializer.loadFullModel("pathToSaveModel.txt");
 
         /*
-            PLEASE NOTE: after model is restored, it's still required to set SentenceIterator and TokenizerFactory, if you're going to train this model
+            주의 : 모델을 재저장한 후에도 이 모델을 학습하려면 SentenceIterator과 TokenizerFactory를 설정해야 한다. 
          */
         SentenceIterator iterator = new BasicLineIterator(filePath);
         TokenizerFactory tokenizerFactory = new DefaultTokenizerFactory();
@@ -104,7 +101,7 @@ public class Word2VecUptrainingExample {
         log.info("Closest words to 'day' on 2nd run: " + lst);
 
         /*
-            Model can be saved for future use now
+            나중에 사용하도록 모델을 저장할 수 있다. 
          */
     }
 }

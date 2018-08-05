@@ -12,12 +12,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is example code for dl4j ParagraphVectors inference use implementation.
- * In this example we load previously built model, and pass raw sentences, probably never seen before, to get their vector representation.
- *
+ * dl4j ParagraphVectors inference 구현 예제.
+ * 이전에 구축한 모델을 로드하고 학습에 사용되지 않은 원본 문장을 전달해서 벡터 표현값을 얻는다. 
  *
  * *************************************************************************************************
- * PLEASE NOTE: THIS EXAMPLE REQUIRES DL4J/ND4J VERSIONS >= 0.6.0 TO COMPILE SUCCESSFULLY
+ * 주의 : 본 예제는 DL4J/ND4J 버전이 0.6.0 이상이어야 정상적으로 동작함. 
  * *************************************************************************************************
  *
  * @author raver119@gmail.com
@@ -31,30 +30,30 @@ public class ParagraphVectorsInferenceExample {
         TokenizerFactory t = new DefaultTokenizerFactory();
         t.setTokenPreProcessor(new CommonPreprocessor());
 
-        // we load externally originated model
+        // 외부에서 모델 로드 
         ParagraphVectors vectors = WordVectorSerializer.readParagraphVectors(resource.getFile());
         vectors.setTokenizerFactory(t);
-        vectors.getConfiguration().setIterations(1); // please note, we set iterations to 1 here, just to speedup inference
+        vectors.getConfiguration().setIterations(1); // 더 빠른 결과를 얻기 위해 iteration을 1로 설정함. 
 
         /*
-        // here's alternative way of doing this, word2vec model can be used directly
-        // PLEASE NOTE: you can't use Google-like model here, since it doesn't have any Huffman tree information shipped.
+        // 다음과 같이 word2vec 모델을 직접 사용할 수도 있다. 
+        // Google-like은 사용할 수 없다는 점에 주의하라. (허프만 트리 정보가 없기 때문에) 
 
         ParagraphVectors vectors = new ParagraphVectors.Builder()
             .useExistingWordVectors(word2vec)
             .build();
         */
-        // we have to define tokenizer here, because restored model has no idea about it
+        // 복원된 모델을 위해 형태소 분석기를 이 부분에 설정해야함.  
 
 
         INDArray inferredVectorA = vectors.inferVector("This is my world .");
         INDArray inferredVectorA2 = vectors.inferVector("This is my world .");
         INDArray inferredVectorB = vectors.inferVector("This is my way .");
 
-        // high similarity expected here, since in underlying corpus words WAY and WORLD have really close context
+        // 단어 WAY와 WORLD는 실제로 매우 밀접한 문맥에서 사용되었기 때문에 높은 유사성이 나타날 것으로 예상 됨. 
         log.info("Cosine similarity A/B: {}", Transforms.cosineSim(inferredVectorA, inferredVectorB));
 
-        // equality expected here, since inference is happening for the same sentences
+        // 같은 문장에 대해 계산하기 때문에 아마 같다는 결과가 나올 것으로 예상 됨. 
         log.info("Cosine similarity A/A2: {}", Transforms.cosineSim(inferredVectorA, inferredVectorA2));
     }
 }

@@ -16,11 +16,11 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 
 /**
- * This is example code for dl4j ParagraphVectors implementation. In this example we build distributed representation of all sentences present in training corpus.
- * However, you still use it for training on labelled documents, using sets of LabelledDocument and LabelAwareIterator implementation.
+ * dl4j ParagraphVectors 구현 예제. 이 예에서는 학습 데이터에 있는 모든 문장에 대해 분산된 표현을 구축한다. 
+ * LabelledDocument과 LabelAwareIterator를 이용한 레이블이 붙은 데이터를 학습하기 위해 사용된다. 
  *
  * *************************************************************************************************
- * PLEASE NOTE: THIS EXAMPLE REQUIRES DL4J/ND4J VERSIONS >= rc3.8 TO COMPILE SUCCESSFULLY
+ * 주의 : 본 예제는 DL4J/ND4J 버전이 rc3.8이상이어야 정상적으로 동작함.  
  * *************************************************************************************************
  *
  * @author raver119@gmail.com
@@ -40,10 +40,8 @@ public class ParagraphVectorsTextExample {
         t.setTokenPreProcessor(new CommonPreprocessor());
 
         /*
-             if you don't have LabelAwareIterator handy, you can use synchronized labels generator
-              it will be used to label each document/sequence/line with it's own label.
-
-              But if you have LabelAwareIterator ready, you can can provide it, for your in-house labels
+            LabelAwareIterator가 없다면 동기화 된 레이블 생성기를 사용해서 각 문서/문장/라인에 각각의 레이블을 붙일 수 있다. 
+            LabelAwareIterator가 있다면 내부적으로 레이블을 붙일 수 있다. 
         */
         LabelsSource source = new LabelsSource("DOC_");
 
@@ -65,8 +63,8 @@ public class ParagraphVectorsTextExample {
         vec.fit();
 
         /*
-            In training corpus we have few lines that contain pretty close words invloved.
-            These sentences should be pretty close to each other in vector space
+            학습 코퍼스에는 꽤 가까운 단어가 포함된 문장이 몇 개 있다. 
+            이 문장들은 벡터공간에서 인접하게 위치할 것이다. 
 
             line 3721: This is my way .
             line 6348: This is my case .
@@ -74,10 +72,10 @@ public class ParagraphVectorsTextExample {
             line 12493: This is my world .
             line 16393: This is my work .
 
-            this is special sentence, that has nothing common with previous sentences
+            위의 문장들과 전혀 관련이 없는 다음과 같은 문장도 있다. 
             line 9853: We now have one .
 
-            Note that docs are indexed from 0
+            문서의 인덱스는 0부터 시작한다는 것에 주의하자. 
          */
 
         double similarity1 = vec.similarity("DOC_9835", "DOC_12492");
@@ -89,7 +87,7 @@ public class ParagraphVectorsTextExample {
         double similarity3 = vec.similarity("DOC_6347", "DOC_3720");
         log.info("6348/3721 ('This is my case .'/'This is my way .') similarity: " + similarity3);
 
-        // likelihood in this case should be significantly lower
+        // 이 경우 가능도는 매우 낮다. 
         double similarityX = vec.similarity("DOC_3720", "DOC_9852");
         log.info("3721/9853 ('This is my way .'/'We now have one .') similarity: " + similarityX +
             "(should be significantly lower)");

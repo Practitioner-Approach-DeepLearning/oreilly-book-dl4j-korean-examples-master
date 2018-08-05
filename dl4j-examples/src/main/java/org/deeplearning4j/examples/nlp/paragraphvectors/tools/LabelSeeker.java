@@ -11,9 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This is primitive seeker for nearest labels.
- * It's used instead of basic wordsNearest method because for ParagraphVectors
- * only labels should be taken into account, not individual words
+ * 가장 유사한 레이블을 찾는 원시적인 탐색기이다. 
+ * ParagraphVectors는 각각의 단어가 아닌 레이블이 어떻게 할당될 것인지만 고려되기 때문에 기본적이인 wordsNearest 함수 대신에 이용된다. 
  *
  * @author raver119@gmail.com
  */
@@ -28,8 +27,7 @@ public class LabelSeeker {
     }
 
     /**
-     * This method accepts vector, that represents any document,
-     * and returns distances between this document, and previously trained categories
+     * 벡터를 이용해서 문서를 표현하고, 이전에 학습된 각 카테고리와 이 문서와의 거리를 반환한다. 
      * @return
      */
     public List<Pair<String, Double>> getScores(@NonNull INDArray vector) {

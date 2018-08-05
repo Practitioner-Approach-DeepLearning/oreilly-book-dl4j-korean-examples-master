@@ -13,8 +13,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Simple utility class that builds centroid vector for LabelledDocument
- * based on previously trained ParagraphVectors model
+ * 이전에 학습된 ParagraphVectors 모델을 기반으로 LabelledDocument의 중심 벡터를 만드는 간단한 유틸리티 클래스.
  *
  * @author raver119@gmail.com
  */
@@ -31,7 +30,7 @@ public class MeansBuilder {
     }
 
     /**
-     * This method returns centroid (mean vector) for document.
+     * 문서의 중심(mean) 벡터를 반환함. 
      *
      * @param document
      * @return

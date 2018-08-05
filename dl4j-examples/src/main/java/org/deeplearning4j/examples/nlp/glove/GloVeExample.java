@@ -23,10 +23,10 @@ public class GloVeExample {
     public static void main(String[] args) throws Exception {
         File inputFile = new ClassPathResource("raw_sentences.txt").getFile();
 
-        // creating SentenceIterator wrapping our training corpus
+        // 학습용 코퍼스를 감싸는 SentenceIterator 생성. 
         SentenceIterator iter = new BasicLineIterator(inputFile.getAbsolutePath());
 
-        // Split on white spaces in the line to get words
+        // 줄마다 공백으로 분리해서 단어 획득.
         TokenizerFactory t = new DefaultTokenizerFactory();
         t.setTokenPreProcessor(new CommonPreprocessor());
 
@@ -38,19 +38,19 @@ public class GloVeExample {
                 .alpha(0.75)
                 .learningRate(0.1)
 
-                // number of epochs for training
+                // 학습 에포크 수 
                 .epochs(25)
 
-                // cutoff for weighting function
+                // 가중치 함수 컷오프 
                 .xMax(100)
 
-                // training is done in batches taken from training corpus
+                // 학습 코퍼스로 부터 가져온 배치 크기별로 학습이 이루어짐. 
                 .batchSize(1000)
 
-                // if set to true, batches will be shuffled before training
+                // True이면 학습 하기 전에 배치를 섞음. 
                 .shuffle(true)
 
-                // if set to true word pairs will be built in both directions, LTR and RTL
+                // True인 경우 단어 쌍은 양방향으로 모두 구축 됨. 
                 .symmetric(true)
                 .build();
 
