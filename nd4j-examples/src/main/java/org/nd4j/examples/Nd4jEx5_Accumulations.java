@@ -9,29 +9,29 @@ import java.util.Arrays;
 /**
  * --- Nd4j Example 5: Accumulation/Reduction Operations ---
  *
- * In this example, we'll see ways to reduce INDArrays - for example, perform sum and max operations
+ * 이번 예제에서는, INDArray를 줄이는 방법에 대해 알아봅시다 - sum, max 와 같은 작업을 수행하면서 생기는 일에 대해
+ * 알아봅시다.
  *
  * @author Alex Black
  */
 public class Nd4jEx5_Accumulations {
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
 
         /*
-        There are two types of accumulation/reduction operations:
-        - Whole array operations                    ->  returns a scalar value
-        - Operations along one or more dimensions   ->  returns an array
-
-        Furthermore, there are two classes of accumulations:
-        - Standard accumulations:   Accumulations that return a real-value - for example, min, max, sum, etc.
-        - Index accumulations:      Accumulations that return an integer index - for example argmax
-
+         * 축적하거나 줄이는 작업에는 두가지 방법이 있다. - 전체 행렬에 대한 작업 -> 스칼라 값을 반환 - 하나 혹은 그이상의 디멘젼에 대한
+         * 작업 -> 하나의 배열 반환
+         * 
+         * 두가지 타입의 축적 관련 클레스가 있다. - 일반적인 축적: 실제 값을 반환 - min, max, sum, etc... - 인덱스 기반
+         * 축적 : 인덱스값을 반환 - argmax
+         * 
          */
 
-        INDArray originalArray = Nd4j.linspace(1,15,15).reshape('c',3,5);       //As per example 3
+        INDArray originalArray = Nd4j.linspace(1, 15, 15).reshape('c', 3, 5); // 예제 3을 참고하자, 1 X 15 -> 3 X 5 INDArray로
+                                                                              // 변경
         System.out.println("Original array: \n" + originalArray);
 
-        //First, let's consider whole array reductions:
+        // 첫번째, 전체 행렬의 축소에 대해 새각해보자
         double minValue = originalArray.minNumber().doubleValue();
         double maxValue = originalArray.maxNumber().doubleValue();
         double sum = originalArray.sumNumber().doubleValue();
@@ -44,9 +44,8 @@ public class Nd4jEx5_Accumulations {
         System.out.println("average:        " + avg);
         System.out.println("standard dev.:  " + stdev);
 
-
-        //Second, let's perform the same along dimension 0.
-        //In this case, the output is a [1,5] array; each output value is the min/max/mean etc of the corresponding column:
+        // 두번째, 0번쨰 디멘전을 변경하는 방법에 대해 알아보자
+        // 이경우, 출력은 [1, 5] 행렬이다. 각각 출력값은 동일한 열의 최소/최대/평균이다.
         INDArray minAlong0 = originalArray.min(0);
         INDArray maxAlong0 = originalArray.max(0);
         INDArray sumAlong0 = originalArray.sum(0);
@@ -60,19 +59,18 @@ public class Nd4jEx5_Accumulations {
         System.out.println("avg along dimension 0:  " + avgAlong0);
         System.out.println("stdev along dimension 0:  " + stdevAlong0);
 
-        //If we had instead performed these along dimension 1, we would instead get a [3,1] array out
-        //In this case, each output value would be the reduction of the values in each column
-        //Again, note that when this is printed it looks like a row vector, but is in facta column vector
+        // 디멘젼 1을 따라 이러한 작업을 수행하면 대신 3 X 1 배열을 출력할 것이다.
+        // 이 경우, 각각의 출력 값은 각각 열을 줄이는 값이다.
+        // 다시 말하지만, 아래 내용이 인쇄 될 때 그것은 행 벡터처럼 보이지만 실제로는 열 벡터이다.
         INDArray avgAlong1 = originalArray.mean(1);
         System.out.println("\n\navg along dimension 1:  " + avgAlong1);
         System.out.println("Shape of avg along d1:  " + Arrays.toString(avgAlong1.shape()));
 
-
-
-        //Index accumulations return an integer value.
-        INDArray argMaxAlongDim0 = Nd4j.argMax(originalArray,0);                            //Index of the max value, along dimension 0
+        // Index accumulations return an integer value.
+        // 인덱스기반 누적은 정수 값을 반환한다.
+        INDArray argMaxAlongDim0 = Nd4j.argMax(originalArray, 0); // 디멘젼 0에 대한 최대값에 대한 인덱스
         System.out.println("\n\nargmax along dimension 0:   " + argMaxAlongDim0);
-        INDArray argMinAlongDim0 = Nd4j.getExecutioner().exec(new IMin(originalArray),0);   //Index of the min value, along dimension 0
+        INDArray argMinAlongDim0 = Nd4j.getExecutioner().exec(new IMin(originalArray), 0); // 디멘젼 0에 대한 최소값에 대한 인덱스
         System.out.println("argmin along dimension 0:   " + argMinAlongDim0);
     }
 
