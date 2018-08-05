@@ -1,18 +1,15 @@
 #!/usr/bin/env bash
 # 하나씩 또는 전체 예제 실행.
 # runexamples.sh -h 를 통해 가능한 옵션 확인.
-#   -h|--help          도움말을 보여주고 종료
-#   -a|--all           모든 예제 실행. 기본값은 실행할 예제 번호 입력을 대기함. 
-#   -n|--no-pauses     예제 사이에 대기하지 않음.(--all 옵션과 함께 사용)
 
 help() {
   [ -n "$1" ] && echo $1
   cat <<-EOF1
 usage: $0 [-h|--help] [-a|-all] [-n|--no-pauses]
 where:
-  -h|--help          Show help and quit
-  -a|--all           Run all the examples. Default is to prompt for which one to run.
-  -n|--no-pauses     Don't pause between examples (use with --all).
+  -h|--help          도움말을 보여주고 종료
+  -a|--all           모든 예제 실행. 기본값은 실행할 예제 번호 입력을 대기함. 
+  -n|--no-pauses     예제 사이에 대기하지 않음.(--all 옵션과 함께 사용)
 }
 EOF1
 }
@@ -80,7 +77,7 @@ cd dl4j-examples/src/main/java
 
 find_examples() {
   # "main"을 검색해서 모든 Java 파일을 찾은 다음 '/'를 '.'으로 변경.
-  # '.' 이후의 불필요한 공란 삭제 후 .java 확장자를 가지는 정규화된 클래스명 생성.
+  # '.' 이후의 불필요한 공란 삭제 후 정규화된 클래스명 생성.
   find . -name '*.java' -exec grep -l 'void main' {} \; | \
     sed "s?/?.?g" | sed "s?^\.*\(.*\)\.java?\1?"
 }
