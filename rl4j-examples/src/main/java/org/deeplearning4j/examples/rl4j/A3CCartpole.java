@@ -23,7 +23,7 @@ public class A3CCartpole {
                     500000,         //최대 스텝 
                     16,              //쓰레드 수
                     5,              //t_max
-                    10,             // noop 스텝 수
+                    10,             // noop 시작 스텝 수
                     0.01,           //보상 스케일링
                     0.99,           //gamma
                     10.0           //td-error 클립핑
