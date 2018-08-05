@@ -14,16 +14,16 @@ server:
   requestLog:
     appenders: []
 
-# Logging settings.
+# 로깅 셋팅.
 logging:
 
-  # The default level of all loggers. Can be OFF, ERROR, WARN, INFO, DEBUG, TRACE, or ALL.
+  # logger 기본 레벨 : OFF, ERROR, WARN, INFO, DEBUG, TRACE, ALL.
   level: INFO
 
-  # Logger-specific levels.
+  # logger의 특화 레벨.
   loggers:
 
-    # Sets the level for 'com.example.app' to DEBUG.
+    # 'com.example.app'를 DEBUG하기 위한 레벨 설정.
     org.deeplearning4j: INFO
     org.eclipse.jetty: INFO
 
