@@ -17,11 +17,10 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * This example shows how to perform joins in DataVec
- * Joins are analogous to join operations in databases/SQL: data from multiple sources are combined together, based
- * on some common key that appears in both sources.
+ * 이번 예제는 DataVec에서 조인을 어떻게 실행하는지 보여준다
+ * 조인은 database/SQL의 join과 유사하다. 여러 출처의 데이터가 두 출처에 나타나는 공통 키에 따라 함께 결합된다.
  *
- * This example loads data from two CSV files. It is some mock customer data
+ * 이 예제에서는 두개의 CSV 파일을 로드한다. 이것은 무작위로 생성된 고객 데이터이다.
  *
  * @author Alex Black
  */
@@ -32,8 +31,7 @@ public class JoinExample {
         String customerInfoPath = new ClassPathResource("JoinExample/CustomerInfo.csv").getFile().getPath();
         String purchaseInfoPath = new ClassPathResource("JoinExample/CustomerPurchases.csv").getFile().getPath();
 
-        //First: Let's define our two data sets, and their schemas
-
+        // 첫번쨰 : 두개의 데이터 셋을 스키마 형태로 정의하자.
         Schema customerInfoSchema = new Schema.Builder()
             .addColumnLong("customerID")
             .addColumnString("customerName")
@@ -50,21 +48,21 @@ public class JoinExample {
 
 
 
-        //Spark Setup
+        // 스파크 준비
         SparkConf conf = new SparkConf();
         conf.setMaster("local[*]");
         conf.setAppName("DataVec Join Example");
         JavaSparkContext sc = new JavaSparkContext(conf);
 
-        //Load the data:
+        // 데이터 로드
         RecordReader rr = new CSVRecordReader();
         JavaRDD<List<Writable>> customerInfo = sc.textFile(customerInfoPath).map(new StringToWritablesFunction(rr));
         JavaRDD<List<Writable>> purchaseInfo = sc.textFile(purchaseInfoPath).map(new StringToWritablesFunction(rr));
-            //Collect data for later printing
+         //출력 이후 데이터 수집
         List<List<Writable>> customerInfoList = customerInfo.collect();
         List<List<Writable>> purchaseInfoList = purchaseInfo.collect();
 
-        //Let's join these two data sets together, by customer ID
+        //고객 ID를 기반으로 두개의 데이터 셋을 조인해보자.
         Join join = new Join.Builder(Join.JoinType.Inner)
             .setJoinColumns("customerID")
             .setSchemas(customerInfoSchema, customerPurchasesSchema)
@@ -73,12 +71,11 @@ public class JoinExample {
         JavaRDD<List<Writable>> joinedData = SparkTransformExecutor.executeJoin(join, customerInfo, purchaseInfo);
         List<List<Writable>> joinedDataList = joinedData.collect();
 
-        //Stop spark, and wait a second for it to stop logging to console
+        //스파크 중단, 콘솔에 로깅될때까지 몇 초간 여유를 준다.
         sc.stop();
         Thread.sleep(2000);
 
-
-        //Print the original data
+        //기본 데이터 출력
         System.out.println("\n\n----- Customer Information -----");
         System.out.println("Source file: " + customerInfoPath);
         System.out.println(customerInfoSchema);
@@ -96,8 +93,7 @@ public class JoinExample {
             System.out.println(line);
         }
 
-
-        //Print the joined data
+        // 조인된 데이터 출력
         System.out.println("\n\n----- Joined Data -----");
         System.out.println(join.getOutputSchema());
         System.out.println("Joined Data:");

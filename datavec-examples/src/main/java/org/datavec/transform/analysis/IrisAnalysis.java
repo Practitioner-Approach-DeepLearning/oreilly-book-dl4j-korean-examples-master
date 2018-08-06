@@ -20,9 +20,8 @@ import java.io.File;
 import java.util.List;
 
 /**
- * Conduct and export some basic analysis on the Iris dataset, as a stand-alone .html file.
- *
- * This functionality is still fairly basic, but can still be useful for analysis and debugging.
+ * .html file. 독립 실행 형 .html 파일로 아이리스 데이터 집합에 대한 기본 분석을 수행하고 내 보낸다. 이 기능은 기본이지만
+ * 분석 및 디버깅에 여전히 유용 할 수 있다.
  *
  * @author Alex Black
  */
@@ -31,9 +30,8 @@ public class IrisAnalysis {
     public static void main(String[] args) throws Exception {
 
         Schema schema = new Schema.Builder()
-            .addColumnsDouble("Sepal length", "Sepal width", "Petal length", "Petal width")
-            .addColumnInteger("Species")
-            .build();
+                .addColumnsDouble("Sepal length", "Sepal width", "Petal length", "Petal width")
+                .addColumnInteger("Species").build();
 
         SparkConf conf = new SparkConf();
         conf.setMaster("local[*]");
@@ -41,10 +39,11 @@ public class IrisAnalysis {
 
         JavaSparkContext sc = new JavaSparkContext(conf);
 
-        String directory = new ClassPathResource("IrisData/iris.txt").getFile().getParent(); //Normally just define your directory like "file:/..." or "hdfs:/..."
+        String directory = new ClassPathResource("IrisData/iris.txt").getFile().getParent(); // 일반적으로 파일패스는 "file:/..."
+                                                                                             // or "hdfs:/..." 이다.
         JavaRDD<String> stringData = sc.textFile(directory);
 
-        //We first need to parse this comma-delimited (CSV) format; we can do this using CSVRecordReader:
+        // 첫번째로 CSV포맷을 파싱한다; 이것을 CSVRecordReader라는 것으로 사용한다.
         RecordReader rr = new CSVRecordReader();
         JavaRDD<List<Writable>> parsedInputData = stringData.map(new StringToWritablesFunction(rr));
 
@@ -53,18 +52,18 @@ public class IrisAnalysis {
 
         System.out.println(dataAnalysis);
 
-        //We can get statistics on a per-column basis:
-        DoubleAnalysis da = (DoubleAnalysis)dataAnalysis.getColumnAnalysis("Sepal length");
+        // 열 단위의 값을 얻을 수 있다.
+        DoubleAnalysis da = (DoubleAnalysis) dataAnalysis.getColumnAnalysis("Sepal length");
         double minValue = da.getMin();
         double maxValue = da.getMax();
         double mean = da.getMean();
 
         HtmlAnalysis.createHtmlAnalysisFile(dataAnalysis, new File("DataVecIrisAnalysis.html"));
 
-        //To write to HDFS instead:
-        //String htmlAnalysisFileContents = HtmlAnalysis.createHtmlAnalysisString(dataAnalysis);
-        //SparkUtils.writeStringToFile("hdfs://your/hdfs/path/here",htmlAnalysisFileContents,sc);
+        // HDFS에 쓰기:
+        // String htmlAnalysisFileContents =
+        // HtmlAnalysis.createHtmlAnalysisString(dataAnalysis);
+        // SparkUtils.writeStringToFile("hdfs://your/hdfs/path/here",htmlAnalysisFileContents,sc);
     }
-
 
 }
