@@ -34,10 +34,10 @@ import java.util.List;
  * org.deeplearning4j.examples.dataExample.CSVExample을 참고하자
  *
  * 여기서는 트랜잭션과 관련된 일부 데이터를 CSV 형식으로 사용할 수 있다는 것을 전제로하고 있으며 이 데이터에 대해 일부 작업을 수행한다.
- * 
+ *
  * 1. 불필요한 열을 제거한다. 2. "USA", "CAN"이 "MerchantCountryCode" 열에 유지되기 위한 필터링 3.
  * "TransactionAmountUSD" 컬럼에서 유효하지 않은 값 대체
- * 
+ *
  * 날짜 문자열을 파싱하고 시간을 추출하여 새로운 "HourOfDay"열을 만든다.
  *
  * @author Alex Black
@@ -104,74 +104,63 @@ public class BasicDataVecExample {
                                                                                                       // 0.0
 
                 // Finally, let's suppose we want to parse our date/time column in a format like
+                // 마지막으로 다음과 같은 형식으로 날짜 / 시간 열을 구문 분석한다고 가정 해 보자.
                 // "2016/01/01 17:50.000"
-                // We use JodaTime internally, so formats can be specified as follows:
+                // 내부적으로 날짜 시간 포맷을 JodaTime으로 사용한다. 자세한 내용은 아래 링크를 참고하자.
                 // http://www.joda.org/joda-time/apidocs/org/joda/time/format/DateTimeFormat.html
 
                 .stringToTimeTransform("DateTimeString", "YYYY-MM-DD HH:mm:ss.SSS", DateTimeZone.UTC)
 
-                // However, our time column ("DateTimeString") isn't a String anymore. So let's
-                // rename it to something better:
+                // 그러나, 시간 열 ("DateTimeString")은 더이상 문자열이 아니다. 더 나은 이름으로 바꿔보자.
                 .renameColumn("DateTimeString", "DateTime")
 
-                // At this point, we have our date/time format stored internally as a long value
-                // (Unix/Epoch format): milliseconds since 00:00.000 01/01/1970
-                // Suppose we only care about the hour of the day. Let's derive a new column for
-                // that, from the DateTime column
+                // 이 시점에서 우리는 날짜 / 시간 형식을 내부적으로 밀리세컨드를 사용했다다(Unix/Epoch 포맷). 1970년 1월 1일부터 시작하는 밀리세컨드 값
+                // 시간만 체크한다고 생각했을 때. DateTime 열로부터 새로운 열을 아래와 같이 추출할 수 있다.
                 .transform(new DeriveColumnsFromTimeTransform.Builder("DateTime")
                         .addIntegerDerivedColumn("HourOfDay", DateTimeFieldType.hourOfDay()).build())
 
-                // We no longer need our "DateTime" column, as we've extracted what we need from
-                // it. So let's remove it
+                // "DateTime" 컬럼이 더이상 필요하지 않기 때문에 이 열을 삭제해주는 것이 좋다.
                 .removeColumns("DateTime")
 
-                // We've finished with the sequence of operations we want to do: let's create
-                // the final TransformProcess object
+                // 모든 내용을 다 처리 했기 때문에 최종적인 TransformProcess 객체를 만들자.
                 .build();
 
-        // After executing all of these operations, we have a new and different schema:
+        // 위의 작업들을 모두 마치면 새로운 스키마를 얻을 수 있다.
         Schema outputSchema = tp.getFinalSchema();
 
         System.out.println("\n\n\nSchema after transforming data:");
         System.out.println(outputSchema);
 
         // =====================================================================
-        // Step 3: Load our data and execute the operations on Spark
+        // 세번째 : 데이터 로드 후 스파크에서 작업을 수행하도록 하기
         // =====================================================================
 
-        // We'll use Spark local to handle our data
-
+        // 데이터를 다루기 위해 로컬 스파크를 사용한다.
         SparkConf conf = new SparkConf();
         conf.setMaster("local[*]");
         conf.setAppName("DataVec Example");
 
         JavaSparkContext sc = new JavaSparkContext(conf);
 
-        String directory = new ClassPathResource("BasicDataVecExample/exampledata.csv").getFile().getParent(); // Normally
-                                                                                                               // just
-                                                                                                               // define
-                                                                                                               // your
-                                                                                                               // directory
-                                                                                                               // like
+        String directory = new ClassPathResource("BasicDataVecExample/exampledata.csv").getFile().getParent(); // 일반적으로
+                                                                                                               // 디렉토리는
                                                                                                                // "file:/..."
                                                                                                                // or
                                                                                                                // "hdfs:/..."
+                                                                                                               //형식이다
         JavaRDD<String> stringData = sc.textFile(directory);
 
-        // We first need to parse this format. It's comma-delimited (CSV) format, so
-        // let's parse it using CSVRecordReader:
+        // 첫번째로 CSVRecordReader를 이용해서 CSV 형식을 파싱하자
         RecordReader rr = new CSVRecordReader();
         JavaRDD<List<Writable>> parsedInputData = stringData.map(new StringToWritablesFunction(rr));
 
-        // Now, let's execute the transforms we defined earlier:
+        // 위에서 정의한 변형을 실행해 보자
         JavaRDD<List<Writable>> processedData = SparkTransformExecutor.execute(parsedInputData, tp);
 
-        // For the sake of this example, let's collect the data locally and print it:
+        // 이 예제를 위해 데이터를 로컬에서 수집하여 출력 해 보자.
         JavaRDD<String> processedAsString = processedData.map(new WritablesToStringFunction(","));
-        // processedAsString.saveAsTextFile("file://your/local/save/path/here"); //To
-        // save locally
-        // processedAsString.saveAsTextFile("hdfs://your/hdfs/save/path/here"); //To
-        // save to hdfs
+        // processedAsString.saveAsTextFile("file://your/local/save/path/here"); // 로컬에 저장하는 방법
+        // processedAsString.saveAsTextFile("hdfs://your/hdfs/save/path/here"); //hdfs에 저장하는 방법
 
         List<String> processedCollected = processedAsString.collect();
         List<String> inputDataCollected = stringData.collect();

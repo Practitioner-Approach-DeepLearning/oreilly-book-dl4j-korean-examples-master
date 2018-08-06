@@ -15,22 +15,21 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 /**
- * This is a simple example for the DataVec transformation functionality (building on BasicDataVecExample)
- * It is designed to simply demonstrate that it is possible to obtain the schema after each step of a transform process.
- * This can be useful for debugging your TransformProcess scripts.
- *
+ * 이 예제는 DataVec 변환 기능에 대한 기본적인 예제이다. (BasicDataVecExample 기반)
+ * 이것은 변환 프로세스의 각 단계 후에 스키마를 얻을 수 있음을 간단히 보여주기 위해 설계되었다.
+ * 이것은 TransformProcess 스크립트를 디버깅할 때 유용할 것이다.
  * @author Alex Black
  */
 public class PrintSchemasAtEachStep {
 
     public static void main(String[] args){
 
-        //Define the Schema and TransformProcess as per BasicDataVecExample
+        //BasicDataVecExample에 따라 스키마 및 TransformProcess 정의
         Schema inputDataSchema = new Schema.Builder()
             .addColumnsString("DateTimeString", "CustomerID", "MerchantID")
             .addColumnInteger("NumItemsInTransaction")
             .addColumnCategorical("MerchantCountryCode", Arrays.asList("USA","CAN","FR","MX"))
-            .addColumnDouble("TransactionAmountUSD",0.0,null,false,false)   //$0.0 or more, no maximum limit, no NaN and no Infinite values
+            .addColumnDouble("TransactionAmountUSD",0.0,null,false,false)   //$ 0.0 이상, 최대 제한 없음, NaN 없음, 무한 값 없음
             .addColumnCategorical("FraudLabel", Arrays.asList("Fraud","Legit"))
             .build();
 
@@ -38,9 +37,9 @@ public class PrintSchemasAtEachStep {
             .removeColumns("CustomerID","MerchantID")
             .filter(new ConditionFilter(new CategoricalColumnCondition("MerchantCountryCode", ConditionOp.NotInSet, new HashSet<>(Arrays.asList("USA","CAN")))))
             .conditionalReplaceValueTransform(
-                "TransactionAmountUSD",     //Column to operate on
-                new DoubleWritable(0.0),    //New value to use, when the condition is satisfied
-                new DoubleColumnCondition("TransactionAmountUSD",ConditionOp.LessThan, 0.0)) //Condition: amount < 0.0
+                "TransactionAmountUSD",     //조건이 만족 될 때
+                new DoubleWritable(0.0),    //사용할 열의 새로운 값
+                new DoubleColumnCondition("TransactionAmountUSD",ConditionOp.LessThan, 0.0)) //조건: amount < 0.0
             .stringToTimeTransform("DateTimeString","YYYY-MM-DD HH:mm:ss.SSS", DateTimeZone.UTC)
             .renameColumn("DateTimeString", "DateTime")
             .transform(new DeriveColumnsFromTimeTransform.Builder("DateTime").addIntegerDerivedColumn("HourOfDay", DateTimeFieldType.hourOfDay()).build())
@@ -48,7 +47,7 @@ public class PrintSchemasAtEachStep {
             .build();
 
 
-        //Now, print the schema after each time step:
+        // 각 단계별 진행 이후 스키마를 출력
         int numActions = tp.getActionList().size();
 
         for(int i=0; i<numActions; i++ ){
