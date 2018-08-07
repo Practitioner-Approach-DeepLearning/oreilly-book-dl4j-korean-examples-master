@@ -16,33 +16,31 @@ import java.util.List;
 
 /**
  * /**
- *  This code example is featured in this youtube video
+ * 이 예제에 대한 설명은 유튜브에서도 확인할 수 있다.
  *
  *  http://www.youtube.com/watch?v=DRHIpeJpJDI
  *
- * This differs slightly from the Video Example,
- * The Video example had the data already downloaded
- * This example includes code that downloads the data
+ * 비디오 예제와 다른 점은
+ * 비디오 예제는 이미 데이터가 다운로드되어 있지만
+ * 이 에제는 데이터를 다운로드하는 코드도 포함되어 있다는 점이다.
  *
- *  Data is downloaded from
+ *  데이터는 아래 명령어로 다운로드할 수 있다.
  *
  *
  *  wget http://github.com/myleott/mnist_png/raw/master/mnist_png.tar.gz
- *  followed by tar xzvf mnist_png.tar.gz
- * The Data Directory mnist_png will have two child directories training and testing
- * The training and testing directories will have directories 0-9 with
- * 28 * 28 PNG images of handwritten images
+ *  또한 아래 명령어로 압축을 풀 수 있다.
+ *  tar xzvf mnist_png.tar.gz
+ * 데이터 디렉토리 mnist_png는 training, testing 하위 디렉토리를 가지고 있다.
+ * training, testing 디렉토리는 0~9 하위 디렉토리를 가지고 있다.
+ * 각 디렉토리에는 손글씨 이미지 28 * 28 PNG가 포함되어 있다.
  *
  *
  *
  *
  *
- *  This examples builds on the MnistImagePipelineExample
- *  by giving the user a file chooser to test an image of their choice
- *  against the Nueral Net, will the network think this cat is an 8 or a 1
- *  Seriously you can test anything, but obviously the network was trained on handwritten images
- *  0-9 white digit, black background, so it will work better with stuff closer to what it was
- *  designed for
+ *  이 예제는 MnistImagePipelineExample 예제를 기반으로 만들어졌으며
+ *  사용자가 이미지를 골라 신경망을 테스트해볼 수 있도록 파일 선택기가 추가됐다.
+ *  사용자는 무엇이든 테스트할 수 있지만, 신경망이 검은 바탕 흰글씨로 작성된 0~9 손글씨로 학습된 상태이므로 설계대로 잘 동작할 것이다.
  *
  */
 public class MnistImagePipelineLoadChooser {
@@ -50,10 +48,8 @@ public class MnistImagePipelineLoadChooser {
 
 
     /*
-    Create a popup window to allow you to chose an image file to test against the
-    trained Neural Network
-    Chosen images will be automatically
-    scaled to 28*28 grayscale
+    훈련된 신경망에 대해 테스트할 이미지 파일을 선택할 수 있는 팝업 창을 만든다.
+    선택한 이미지는 자동으로 28 x 28 그레이 스케일로 조정된다.
      */
     public static String fileChose(){
         JFileChooser fc = new JFileChooser();
@@ -75,19 +71,19 @@ public class MnistImagePipelineLoadChooser {
         int channels = 1;
 
         // recordReader.getLabels()
-        // In this version Labels are always in order
-        // So this is no longer needed
+        // 이 버전에서는 라벨이 항상 순서대로 되어 있으므로
+        // 이 부분은 불필요하다.
         //List<Integer> labelList = Arrays.asList(2,3,7,1,6,4,0,5,8,9);
         List<Integer> labelList = Arrays.asList(0,1,2,3,4,5,6,7,8,9);
 
-        // pop up file chooser
+        // 파일 선택기를 팝업으로 띄운다.
         String filechose = fileChose().toString();
 
-        //LOAD NEURAL NETWORK
+        // 신경망 불러오기
 
-        // Where to save model
+        // 모델이 저장된 위치
         File locationToSave = new File("trained_mnist_model.zip");
-        // Check for presence of saved model
+        // 모델 저장 여부 확인
         if(locationToSave.exists()){
             System.out.println("\n######Saved Model Found######\n");
         }else{
@@ -105,15 +101,15 @@ public class MnistImagePipelineLoadChooser {
 
         log.info("*********TEST YOUR IMAGE AGAINST SAVED NETWORK********");
 
-        // FileChose is a string we will need a file
+        // FileChose는 선택한 파일 경로 문자열이다
 
         File file = new File(filechose);
 
-        // Use NativeImageLoader to convert to numerical matrix
+        // NativeImageLoader를 사용해 숫자 행렬로 변환
 
         NativeImageLoader loader = new NativeImageLoader(height, width, channels);
 
-        // Get the image into an INDarray
+        // 이미지를 INDarray로 가져온다.
 
         INDArray image = loader.asMatrix(file);
 
@@ -121,7 +117,7 @@ public class MnistImagePipelineLoadChooser {
         // 0-1
         DataNormalization scaler = new ImagePreProcessingScaler(0,1);
         scaler.transform(image);
-        // Pass through to neural Net
+        // 신경망을 통과
 
         INDArray output = model.output(image);
 
@@ -129,7 +125,7 @@ public class MnistImagePipelineLoadChooser {
         log.info("## The Neural Nets Pediction ##");
         log.info("## list of probabilities per label ##");
         //log.info("## List of Labels in Order## ");
-        // In new versions labels are always in order
+        // 이 버전에서는 레이블이 항상 순서대로 지정된다.
         log.info(output.toString());
         log.info(labelList.toString());
 

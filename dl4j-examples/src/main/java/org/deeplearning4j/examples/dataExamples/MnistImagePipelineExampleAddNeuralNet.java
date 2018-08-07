@@ -40,36 +40,37 @@ import java.io.*;
 import java.util.Random;
 
 /**
- *  This code example is featured in this youtube video
+ *  이 예제에 대한 설명은 유튜브에서도 확인할 수 있다.
  *  https://www.youtube.com/watch?v=ECA6y6ahH5E
  *
- ** This differs slightly from the Video Example,
- * The Video example had the data already downloaded
- * This example includes code that downloads the data
+ * 비디오 예제와 다른 점은
+ * 비디오 예제는 이미 데이터가 다운로드되어 있지만
+ * 이 에제는 데이터를 다운로드하는 코드도 포함되어 있다는 점이다.
  *
  *
- * The Data Directory mnist_png will have two child directories training and testing
- * The training and testing directories will have directories 0-9 with
- * 28 * 28 PNG images of handwritten images
+ * 데이터 디렉토리 mnist_png는 training, testing 하위 디렉토리를 가지고 있다.
+ * training, testing 디렉토리는 0~9 하위 디렉토리를 가지고 있다.
+ * 각 디렉토리에는 손글씨 이미지 28 * 28 PNG가 포함되어 있다.
  *
  *
  *
- *  The data is downloaded from
+ *  데이터는 아래 명령어로 다운로드할 수 있다.
  *  wget http://github.com/myleott/mnist_png/raw/master/mnist_png.tar.gz
- *  followed by tar xzvf mnist_png.tar.gz
+ *  또한 아래 명령어로 압축을 풀 수 있다.
+ *  tar xzvf mnist_png.tar.gz
  *
  *
  *
- *  This examples builds on the MnistImagePipelineExample
- *  by adding a Neural Net
+ *  이 예제는 MnistImagePipelineExample 예제를 기반으로 만들어졌으며
+ *  신경망이 추가됐다.
  */
 public class MnistImagePipelineExampleAddNeuralNet {
     private static Logger log = LoggerFactory.getLogger(MnistImagePipelineExampleAddNeuralNet.class);
 
-    /** Data URL for downloading */
+    /** 데이터를 다운로드할 URL */
     public static final String DATA_URL = "http://github.com/myleott/mnist_png/raw/master/mnist_png.tar.gz";
 
-    /** Location to save and extract the training/testing data */
+    /** 추출한 training/testing를 저장할 경로 */
     public static final String DATA_PATH = FilenameUtils.concat(System.getProperty("java.io.tmpdir"), "dl4j_Mnist/");
 
 
@@ -77,9 +78,9 @@ public class MnistImagePipelineExampleAddNeuralNet {
 
 
 
-        // image information
-        // 28 * 28 grayscale
-        // grayscale implies single channel
+        // 이미지 정보
+        // 28 * 28 그레이스케일
+        // 그레이스케일은 단일 채널을 의미함
         int height = 28;
         int width = 28;
         int channels = 1;
@@ -90,54 +91,54 @@ public class MnistImagePipelineExampleAddNeuralNet {
         int numEpochs = 1;
 
          /*
-        This class downloadData() downloads the data
-        stores the data in java's tmpdir
-        15MB download compressed
-        It will take 158MB of space when uncompressed
-        The data can be downloaded manually here
+        이 클래스의 downloadData()언 데이터를 다운로드하고
+        자바의 tmpdir에 저장한다.
+        15MB 짜리 압축 파일을 다운로드하고
+        압축을 풀려면 158MB 공간이 필요하다.
+        데이터는 여기에서 수동으로 다운로드할 수 있다.
         http://github.com/myleott/mnist_png/raw/master/mnist_png.tar.gz
          */
 
 
         downloadData();
 
-        // Define the File Paths
+        // 파일 경로 정의
         File trainData = new File(DATA_PATH + "/mnist_png/training");
         File testData = new File(DATA_PATH + "/mnist_png/testing");
 
-        // Define the File Paths
+        // 파일 경로 정의
         //File trainData = new File("/tmp/mnist_png/training");
         //File testData = new File("/tmp/mnist_png/testing");
 
-        // Define the FileSplit(PATH, ALLOWED FORMATS,random)
+        // FileSplit(경로, 허용 확장자, 랜덤값) 정의
 
         FileSplit train = new FileSplit(trainData, NativeImageLoader.ALLOWED_FORMATS,randNumGen);
         FileSplit test = new FileSplit(testData,NativeImageLoader.ALLOWED_FORMATS,randNumGen);
 
-        // Extract the parent path as the image label
+        // 상위 경로에서 이미지 레이블을 추출
 
         ParentPathLabelGenerator labelMaker = new ParentPathLabelGenerator();
 
         ImageRecordReader recordReader = new ImageRecordReader(height,width,channels,labelMaker);
 
-        // Initialize the record reader
-        // add a listener, to extract the name
+        // 레코드 리더 초기화
+        // 이름을 추출하기 위해 리스너 추가
 
         recordReader.initialize(train);
         //recordReader.setListeners(new LogRecordListener());
 
-        // DataSet Iterator
+        // DataSet 반복자
 
         DataSetIterator dataIter = new RecordReaderDataSetIterator(recordReader,batchSize,1,outputNum);
 
-        // Scale pixel values to 0-1
+        // 픽셀 값을 0~1 사이로 변경
 
         DataNormalization scaler = new ImagePreProcessingScaler(0,1);
         scaler.fit(dataIter);
         dataIter.setPreProcessor(scaler);
 
 
-        // Build Our Neural Network
+        // 신경망 구축
 
         log.info("**** Build Model ****");
 
@@ -167,8 +168,7 @@ public class MnistImagePipelineExampleAddNeuralNet {
 
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
 
-        // The Score iteration Listener will log
-        // output to show how well the network is training
+        // ScoreIterationListener는 신경망 학습 진행 상황을 로그로 남긴다.
         model.setListeners(new ScoreIterationListener(10));
 
         log.info("*****TRAIN MODEL********");
@@ -180,9 +180,8 @@ public class MnistImagePipelineExampleAddNeuralNet {
 
         recordReader.reset();
 
-        // The model trained on the training dataset split
-        // now that it has trained we evaluate against the
-        // test data of images the network has not seen
+        // 훈련 데이터셋으로 훈련된 모델은 이제
+        // 본 적 없는 이미지로 구성된 테스트 데이터에 대해서도 평가할 수 있다.
 
         recordReader.initialize(test);
         DataSetIterator testIter = new RecordReaderDataSetIterator(recordReader,batchSize,1,outputNum);
@@ -190,25 +189,21 @@ public class MnistImagePipelineExampleAddNeuralNet {
         testIter.setPreProcessor(scaler);
 
         /*
-        log the order of the labels for later use
-        In previous versions the label order was consistent, but random
-        In current verions label order is lexicographic
-        preserving the RecordReader Labels order is no
-        longer needed left in for demonstration
-        purposes
+        이전 버전에서는 레이블의 순서가 변하지 않으므로 이를 로그로 남겨 참고했지만
+        현재 버전에서는 레이블의 순서가 랜덤이므로 사전식으로 정렬해야한다.
+        따라서 더이상 RecordReader는 레이블 순서를 보존할 필요가 없다.
         */
         log.info(recordReader.getLabels().toString());
 
-        // Create Eval object with 10 possible classes
+        // 클래스 10개로 Evaluation 객체 생성
         Evaluation eval = new Evaluation(outputNum);
 
 
-        // Evaluate the network
+        // 신경망 평가
         while(testIter.hasNext()){
             DataSet next = testIter.next();
             INDArray output = model.output(next.getFeatureMatrix());
-            // Compare the Feature Matrix from the model
-            // with the labels from the RecordReader
+            // 모델의 특징 행렬을 레코드 리더의 레이블과 비교
             eval.eval(next.getLabels(),output);
 
         }
@@ -219,18 +214,16 @@ public class MnistImagePipelineExampleAddNeuralNet {
     }
 
      /*
-    Everything below here has nothing to do with your RecordReader,
-    or DataVec, or your Neural Network
-    The classes downloadData, getMnistPNG(),
-    and extractTarGz are for downloading and extracting the data
+    아래 내용은 레코드 리더, DataVec, 신경망과 아무 관련이 없다.
+    downloadData, getMnistPNG(), extractTarGz는 데이터를 다운로드하고 추추출하기 위한 메서드다.
      */
 
     private static void downloadData() throws Exception {
-        //Create directory if required
+        // 필요 시 디렉토리 생성
         File directory = new File(DATA_PATH);
         if(!directory.exists()) directory.mkdir();
 
-        //Download file:
+        // 파일 다운로드
         String archizePath = DATA_PATH + "/mnist_png.tar.gz";
         File archiveFile = new File(archizePath);
         String extractedPath = DATA_PATH + "mnist_png";
@@ -239,13 +232,13 @@ public class MnistImagePipelineExampleAddNeuralNet {
         if( !archiveFile.exists() ){
             System.out.println("Starting data download (15MB)...");
             getMnistPNG();
-            //Extract tar.gz file to output directory
+            // 출력 디렉토리에 tar.gz 파일 추출
             extractTarGz(archizePath, DATA_PATH);
         } else {
-            //Assume if archive (.tar.gz) exists, then data has already been extracted
+            // 아카이브(.tar.gz)가 있다면 데이터도 이미 추출되었다고 가정
             System.out.println("Data (.tar.gz file) already exists at " + archiveFile.getAbsolutePath());
             if( !extractedFile.exists()){
-                //Extract tar.gz file to output directory
+                // 출력 디렉토리에 tar.gz 파일 추출
                 extractTarGz(archizePath, DATA_PATH);
             } else {
                 System.out.println("Data (extracted) already exists at " + extractedFile.getAbsolutePath());
@@ -264,11 +257,11 @@ public class MnistImagePipelineExampleAddNeuralNet {
             new GzipCompressorInputStream( new BufferedInputStream( new FileInputStream(filePath))))){
             TarArchiveEntry entry;
 
-            /** Read the tar entries using the getNextEntry method **/
+            /** getNextEntry 메서드를 사용해 tar 항목 읽기 **/
             while ((entry = (TarArchiveEntry) tais.getNextEntry()) != null) {
                 //System.out.println("Extracting file: " + entry.getName());
 
-                //Create directories as required
+                // 필요 시 디렉토리 생성
                 if (entry.isDirectory()) {
                     new File(outputPath + entry.getName()).mkdirs();
                     dirCount++;

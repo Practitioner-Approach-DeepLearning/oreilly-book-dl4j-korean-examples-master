@@ -33,16 +33,16 @@ public class CSVExample {
 
     public static void main(String[] args) throws  Exception {
 
-        //First: get the dataset using the record reader. CSVRecordReader handles loading/parsing
+        //먼저, 레코드 리더를 사용해 데이터셋을 가져온다. CSVRecordReader는 로드/파싱을 수행한다.
         int numLinesToSkip = 0;
         String delimiter = ",";
         RecordReader recordReader = new CSVRecordReader(numLinesToSkip,delimiter);
         recordReader.initialize(new FileSplit(new ClassPathResource("iris.txt").getFile()));
 
-        //Second: the RecordReaderDataSetIterator handles conversion to DataSet objects, ready for use in neural network
-        int labelIndex = 4;     //5 values in each row of the iris.txt CSV: 4 input features followed by an integer label (class) index. Labels are the 5th value (index 4) in each row
-        int numClasses = 3;     //3 classes (types of iris flowers) in the iris data set. Classes have integer values 0, 1 or 2
-        int batchSize = 150;    //Iris data set: 150 examples total. We are loading all of them into one DataSet (not recommended for large data sets)
+        // 이제 RecordReaderDataSetIterator가 DataSet 객체로의 변환을 처리해 신경망에서 사용할 준비가 되었다.
+        int labelIndex = 4;     // 각 행에 값 5개가 있는 iris.txt CSV: 입력 특징 4개 다음에 정수 레이블(클래스) 색인이 위치한다. 레이블은 각 행의 5번째 값(색인 4)이다.
+        int numClasses = 3;     // 붓꽃 데이터셋에는 클래스 3개(붓꽃 유형)가 존재한다. 각 클래스 정수 값은 0, 1, 2이다.
+        int batchSize = 150;    // 붓꽃 데이터셋은 총 150개의 입력데이터가 있다. 이를 한 DataSet 객체에 로드할 것이다(데이터셋이 클 때는 추천하지 않는다).
 
         DataSetIterator iterator = new RecordReaderDataSetIterator(recordReader,batchSize,labelIndex,numClasses);
         DataSet allData = iterator.next();
@@ -52,11 +52,11 @@ public class CSVExample {
         DataSet trainingData = testAndTrain.getTrain();
         DataSet testData = testAndTrain.getTest();
 
-        //We need to normalize our data. We'll use NormalizeStandardize (which gives us mean 0, unit variance):
+        // 데이터를 정규화하는데 NormalizerStandardize(평균 0, 단위 분산 제공)를 사용한다.
         DataNormalization normalizer = new NormalizerStandardize();
-        normalizer.fit(trainingData);           //Collect the statistics (mean/stdev) from the training data. This does not modify the input data
-        normalizer.transform(trainingData);     //Apply normalization to the training data
-        normalizer.transform(testData);         //Apply normalization to the test data. This is using statistics calculated from the *training* set
+        normalizer.fit(trainingData);           // 학습 데이터에서 통계 (평균/표준편차)를 수집. 이 단계에서는 입력 데이터를 수정하지는 않음
+        normalizer.transform(trainingData);     // 학습 데이터에 정규화 적용
+        normalizer.transform(testData);         // 테스트 데이터에 정규화 적용. 학습 데이터셋에서 계산된 통계를 이용
 
 
         final int numInputs = 4;
@@ -84,14 +84,14 @@ public class CSVExample {
             .backprop(true).pretrain(false)
             .build();
 
-        //run the model
+        // 모델 실행
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
         model.init();
         model.setListeners(new ScoreIterationListener(100));
 
         model.fit(trainingData);
 
-        //evaluate the model on the test set
+        // 테스트셋으로 모델 평가
         Evaluation eval = new Evaluation(3);
         INDArray output = model.output(testData.getFeatureMatrix());
         eval.eval(testData.getLabels(), output);
