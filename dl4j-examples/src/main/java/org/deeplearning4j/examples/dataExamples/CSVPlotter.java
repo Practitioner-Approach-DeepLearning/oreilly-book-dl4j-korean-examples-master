@@ -34,9 +34,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 /**
- * Read a csv file. Fit and plot the data using Deeplearning4J.
+ * csv 파일 읽기. DL4J를 사용해 피팅 후 그리기
  *
- * @author Robert Altena
+ * @author 로버트 알테나
  */
 public class CSVPlotter {
 
@@ -48,11 +48,11 @@ public class CSVPlotter {
     	ArrayList<DataSet> DataSetList = new ArrayList<>();
     	DataSetList.add(ds);
 
-    	plotDataset(DataSetList); //Plot the data, make sure we have the right data.
+    	plotDataset(DataSetList); // 데이터 그리기, 정확한 데이터인지 확인
 
     	MultiLayerNetwork net =fitStraightline(ds);
 
-    	// Get the min and max x values, using Nd4j
+    	// ND4J를 사용해 x의 최솟값, 최댓값 가져오기
     	NormalizerMinMaxScaler preProcessor = new NormalizerMinMaxScaler();
     	preProcessor.fit(ds);
         int nSamples = 50;
@@ -61,13 +61,13 @@ public class CSVPlotter {
         DataSet modeloutput = new DataSet(x,y);
         DataSetList.add(modeloutput);
 
-    	plotDataset(DataSetList);    //Plot data and model fit.
+    	plotDataset(DataSetList);    //모델 피팅 및 데이터 그리기
     }
 
 	/**
-	 * Fit a straight line using a neural network.
-	 * @param ds The dataset to fit.
-	 * @return The network fitted to the data
+	 * 신경망을 사용해 직선에 피팅하기
+	 * @param ds 피팅할 데이터셋
+	 * @return 데이터에 피팅된 신경망
 	 */
 	private static MultiLayerNetwork fitStraightline(DataSet ds){
 		int seed = 12345;
@@ -78,8 +78,8 @@ public class CSVPlotter {
 	    int numOutputs = 1;
 
 	    //
-	    // Hook up one input to the one output.
-	    // The resulting model is a straight line.
+	    // 입력 하나를 출력 하나와 연결하기
+	    // 모델 결과는 직선
 	    //
 		MultiLayerConfiguration conf = new  NeuralNetConfiguration.Builder()
                 .seed(seed)
@@ -109,11 +109,11 @@ public class CSVPlotter {
 	}
 
     /**
-     * Read a CSV file into a dataset.
+	 * CSV 파일을 읽어 데이터셋 만들기
      *
-     * Use the correct constructor:
+	 * 올바른 생성자를 사용할 것:
      * DataSet ds = new RecordReaderDataSetIterator(rr,batchSize);
-     * returns the data as follows:
+     * 반환되는 데이터는 다음과 같음
      * ===========INPUT===================
      *[[12.89, 22.70],
      * [19.34, 20.47],
@@ -121,17 +121,17 @@ public class CSVPlotter {
      *  [15.87,  8.42],
      *  [10.71, 26.18]]
      *
-     *  Which is not the way the framework likes its data.
+	 *  프레임워크가 데이터를 다루는 방식과는 다름
      *
-     *  This one:
+     *  예를 들면:
      *   RecordReaderDataSetIterator(rr,batchSize, 1, 1, true);
-     *   returns
+     *  반환값
      *   ===========INPUT===================
      * [12.89, 19.34, 16.94, 15.87, 10.71]
      * =================OUTPUT==================
      * [22.70, 20.47,  6.08,  8.42, 26.18]
      *
-     *  This can be used as is for regression.
+	 * 이 출력은 그대로 회귀 분석에 사용될 수 있음
      */
 	private static DataSet readCSVDataset(String filename) throws IOException, InterruptedException{
 		int batchSize = 1000;
@@ -143,6 +143,7 @@ public class CSVPlotter {
 	}
 
 	/**
+	 * 제공된 데이터셋의 xy 플롯을 생성
 	 * Generate an xy plot of the datasets provided.
 	 */
 	private static void plotDataset(ArrayList<DataSet> DataSetList){

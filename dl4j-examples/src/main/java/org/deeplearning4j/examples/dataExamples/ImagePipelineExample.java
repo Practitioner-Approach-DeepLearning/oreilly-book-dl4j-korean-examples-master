@@ -19,13 +19,13 @@ import java.io.File;
 import java.util.Random;
 
 /**
- * Created by susaneraly on 6/9/16.
+ * 6/9/16에 susaneraly가 생성
  */
 public class ImagePipelineExample {
 
     protected static final Logger log = LoggerFactory.getLogger(ImagePipelineExample.class);
 
-    //Images are of format given by allowedExtension -
+    // 이미지는 allowedExtension에 있는 포멧만 사용 가능
     protected static final String [] allowedExtensions = BaseImageLoader.ALLOWED_FORMATS;
 
     protected static final long seed = 12345;
@@ -40,61 +40,60 @@ public class ImagePipelineExample {
 
     public static void main(String[] args) throws Exception {
 
-        //DIRECTORY STRUCTURE:
-        //Images in the dataset have to be organized in directories by class/label.
-        //In this example there are ten images in three classes
-        //Here is the directory structure
-        //                                    parentDir
+        // 디렉토리 구조:
+        // 데이터셋의 이미지는 클레스/레이블에 따라 디렉토리가 구성되야 함
+        // 이 예제에서는 3가지 클래스로 구성된 이미지 10개를 사용
+        // 디렉토리 구조는 다음과 같음
+        //                                    부모 디렉토리
         //                                  /    |     \
         //                                 /     |      \
-        //                            labelA  labelB   labelC
+        //                            레이블 A  레이블 B   레이블 C
         //
-        //Set your data up like this so that labels from each label/class live in their own directory
-        //And these label/class directories live together in the parent directory
+        // 데이터는 레이블에 따라 각 레이블/클래스 디렉토리에 위치
+        // 레이블/클래스 디렉토리는 모두 같은 부모 디렉토리에 위치
         //
         //
         File parentDir = new File(System.getProperty("user.dir"), "dl4j-examples/src/main/resources/DataExamples/ImagePipeline/");
-        //Files in directories under the parent dir that have "allowed extensions" plit needs a random number generator for reproducibility when splitting the files into train and test
+        // 허용된 확장자를 가진
         FileSplit filesInDir = new FileSplit(parentDir, allowedExtensions, randNumGen);
 
-        //You do not have to manually specify labels. This class (instantiated as below) will
-        //parse the parent dir and use the name of the subdirectories as label/class names
+        // 레이블을 수동으로 지정하지 않아도 된다. 레이블/클래스는 부모 디렉토리 및 하위 디렉토리 이름을 사용한다.
         ParentPathLabelGenerator labelMaker = new ParentPathLabelGenerator();
-        //The balanced path filter gives you fine tune control of the min/max cases to load for each class
-        //Below is a bare bones version. Refer to javadocs for details
+        // 밸런스 경로 필터를 사용하면 각 클래스에 대해 최소 / 최대 케이스를 미세하게 조절할 수 있다.
+        // 자세한 설명은 자바독을 참조
         BalancedPathFilter pathFilter = new BalancedPathFilter(randNumGen, allowedExtensions, labelMaker);
 
-        //Split the image files into train and test. Specify the train test split as 80%,20%
+        // 이미지 파일을 학습 데이터와 테스트 데이터로 분할. 학습 데이터 : 테스트 데이터 = 8 : 2
         InputSplit[] filesInDirSplit = filesInDir.sample(pathFilter, 80, 20);
         InputSplit trainData = filesInDirSplit[0];
         InputSplit testData = filesInDirSplit[1];
 
-        //Specifying a new record reader with the height and width you want the images to be resized to.
-        //Note that the images in this example are all of different size
-        //They will all be resized to the height and width specified below
+        // 희망 이미지 크기(높이, 너비)를 갖는 새로운 레코드 리더를 생성
+        // 이 예제의 이미지들은 각각 다른 크기를 가짐
+        // 이미지들은 모두 같은 크기로 조정됨
         ImageRecordReader recordReader = new ImageRecordReader(height,width,channels,labelMaker);
 
-        //Often there is a need to transforming images to artificially increase the size of the dataset
-        //DataVec has built in powerful features from OpenCV
-        //You can chain transformations as shown below, write your own classes that will say detect a face and crop to size
+        // 데이터셋의 크기를 임의로 늘리기 위해 이밎 ㅣ변환을 사용해야 하는 경우도 있음
+        // DataVec는 OpenCV의 강력한 기능을 내장
+        // 아래와 같이 변환을 연결해 얼굴을 감지하고 자르는 클래스를 작성할 수 있음
         /*ImageTransform transform = new MultiImageTransform(randNumGen,
             new CropImageTransform(10), new FlipImageTransform(),
             new ScaleImageTransform(10), new WarpImageTransform(10));
             */
 
-        //You can use the ShowImageTransform to view your images
-        //Code below gives you a look before and after, for a side by side comparison
+        // ShowImageTransform를 사용해 이미지를 볼 수 있음
+        // 아래 코드는 이전과 이후의 모습을 나란히 보여줌
         ImageTransform transform = new MultiImageTransform(randNumGen,new ShowImageTransform("Display - before "));
 
-        //Initialize the record reader with the train data and the transform chain
+        // 학습 데이터와 변환 체인으로 레코드 리더 초기화
         recordReader.initialize(trainData,transform);
-        //convert the record reader to an iterator for training - Refer to other examples for how to use an iterator
+        // 레코드 리더를 학습용 반복자로 변환 - 반복자 사용법은 다른 예제를 참고
         DataSetIterator dataIter = new RecordReaderDataSetIterator(recordReader, 10, 1, outputNum);
         while (dataIter.hasNext()) {
             DataSet ds = dataIter.next();
             System.out.println(ds);
             try {
-                Thread.sleep(3000);                 //1000 milliseconds is one second.
+                Thread.sleep(3000);                 // 1000 밀리초는 1초다
             } catch(InterruptedException ex) {
                 Thread.currentThread().interrupt();
             }

@@ -12,10 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This basic example demonstrates how to use the preprocessors available
- * This example uses the minmax scaler and will work with the 3.10 release and later
- * Later releases and current master will work with all other preprocessors
- * Created by susaneraly on 6/8/16.
+ * 이 기본적인 예제는 전처리기를 사용하는 방법을 보여준다.
+ * 이 예제는 minmax scaler를 사용하며 3.10 릴리스 이후 버전에서 작동된다.
+ * 현재 마스터 버전 및 추후 릴리스 버전은 다른 모든 전처리를 작동 가능하다.
+ * 6/8/16에 susaneraly가 생성.
  */
 public class PreprocessNormalizerExample {
 
@@ -24,8 +24,8 @@ public class PreprocessNormalizerExample {
     public static void main(String[] args) throws  Exception {
 
 
-        //========= This section is to create a dataset and a dataset iterator from the iris dataset stored in csv =============
-        //                               Refer to the csv example for details
+        //========= CSV로 저장된 붓꽃 데이터셋으로부터 데이터셋과 데이터셋 반복자 생성  =============
+        //                               자세한 내용은 CSV 예제 참조
         int numLinesToSkip = 0;
         String delimiter = ",";
         RecordReader recordReader = new CSVRecordReader(numLinesToSkip,delimiter);
@@ -42,8 +42,8 @@ public class PreprocessNormalizerExample {
         DataSet datasetX = fulliterator.next();
         DataSet datasetY = datasetX.copy();
 
-        // We now have datasetX, datasetY, iteratorA, iteratorB all of which have the iris dataset loaded
-        // iteratorA and iteratorB have batchsize of 10. So the full dataset is 150/10 = 15 batches
+        // 이제 데이터셋 X, 데이터셋 Y, 반복자 A, 반복자 B에 모든 붓꽃 데이터셋이 로드되었다.
+        // 반복자 A와 반복자 B는 배치 크기가 10이다. 따라서 전체 데이터셋은 150 / 10 = 15 배치다.
         //=====================================================================================================================
 
         log.info("All preprocessors have to be fit to the intended metrics before they can be used to transform");
@@ -57,7 +57,7 @@ public class PreprocessNormalizerExample {
         log.info("During 'fit' the preprocessor calculates the metrics (std dev and mean for the standardizer, min and max for minmaxscaler) from the data given");
         log.info("Fit can take a dataset or a dataset iterator\n");
 
-        //Fitting a preprocessor with a dataset
+        // 데이터셋에 전처리기 피팅
         log.info("Fitting with a dataset...............");
         preProcessor.fit(datasetX);
         log.info("Calculated metrics");
@@ -77,7 +77,7 @@ public class PreprocessNormalizerExample {
         preProcessor.revert(datasetX);
         log.info("\n{}\n",datasetX.getRange(0,9));
 
-        //Setting a preprocessor in an iterator
+        // 반복자에 전처리기 설정
         log.info("Fitting a preprocessor with iteratorB......");
         NormalizerMinMaxScaler preProcessorIter = new NormalizerMinMaxScaler();
         preProcessorIter.fit(iteratorB);

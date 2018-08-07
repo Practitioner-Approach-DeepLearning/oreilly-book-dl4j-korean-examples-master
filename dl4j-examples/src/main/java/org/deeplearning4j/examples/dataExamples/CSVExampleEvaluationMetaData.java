@@ -29,16 +29,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This example is a version of the basic CSV example, but adds the following:
- * (a) Meta data tracking - i.e., where data for each example comes from
- * (b) Additional evaluation information - getting metadata for prediction errors
+ * 이 예제는 기본적인 CSV 예제에 다음을 추가했다.
+ * (a) 메타데이터 추적 - 예를 들어 데이터가 어떤 입력 데이터로부터 생성됐는가?
+ * (b) 평가 정보 추가 - 예측 오차에 관한 메타데이터를 가져옴
  *
- * @author Alex Black
+ * @author 알렉스 블랙
  */
 public class CSVExampleEvaluationMetaData {
 
     public static void main(String[] args) throws  Exception {
-        //First: get the dataset using the record reader. This is as per CSV example - see that example for details
+        // 먼저, 레코드 리더를 사용해 데이터셋을 가져온다. CSVExample과 동일하다 - 자세한 내용은 해당 예제 참조
         RecordReader recordReader = new CSVRecordReader(0, ",");
         recordReader.initialize(new FileSplit(new ClassPathResource("iris.txt").getFile()));
         int labelIndex = 4;
@@ -46,24 +46,24 @@ public class CSVExampleEvaluationMetaData {
         int batchSize = 150;
 
         RecordReaderDataSetIterator iterator = new RecordReaderDataSetIterator(recordReader,batchSize,labelIndex,numClasses);
-        iterator.setCollectMetaData(true);  //Instruct the iterator to collect metadata, and store it in the DataSet objects
+        iterator.setCollectMetaData(true);  // 메타데이터를 수집하고 DataSet 객체에 저장하도록 반복자에 지시한다.
         DataSet allData = iterator.next();
         allData.shuffle(123);
-        SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.65);  //Use 65% of data for training
+        SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.65);  // 데이터의 65%를 학습에 사용
 
         DataSet trainingData = testAndTrain.getTrain();
         DataSet testData = testAndTrain.getTest();
 
-        //Let's view the example metadata in the training and test sets:
+        // 학습 및 테스트셋에서 입력 데이터의 메타데이터를 보자.
         List<RecordMetaData> trainMetaData = trainingData.getExampleMetaData(RecordMetaData.class);
         List<RecordMetaData> testMetaData = testData.getExampleMetaData(RecordMetaData.class);
 
-        //Let's show specifically which examples are in the training and test sets, using the collected metadata
+        // 수집된 메타데이터를 사용해 학습 및 테스틑셋에 어떤 입력 데이터가 있는지 자세히 보여준다.
         System.out.println("  +++++ Training Set Examples MetaData +++++");
         String format = "%-20s\t%s";
         for(RecordMetaData recordMetaData : trainMetaData){
             System.out.println(String.format(format, recordMetaData.getLocation(), recordMetaData.getURI()));
-            //Also available: recordMetaData.getReaderClass()
+            // 대안으로 사용 가능: recordMetaData.getReaderClass()
         }
         System.out.println("\n\n  +++++ Test Set Examples MetaData +++++");
         for(RecordMetaData recordMetaData : testMetaData){
@@ -71,14 +71,14 @@ public class CSVExampleEvaluationMetaData {
         }
 
 
-        //Normalize data as per basic CSV example
+        // CSVExample과 동일하게 데이터 정규화
         DataNormalization normalizer = new NormalizerStandardize();
-        normalizer.fit(trainingData);           //Collect the statistics (mean/stdev) from the training data. This does not modify the input data
-        normalizer.transform(trainingData);     //Apply normalization to the training data
-        normalizer.transform(testData);         //Apply normalization to the test data. This is using statistics calculated from the *training* set
+        normalizer.fit(trainingData);           // 학습 데이터에서 통계 (평균/표준편차)를 수집. 이 단계에서는 입력 데이터를 수정하지는 않음
+        normalizer.transform(trainingData);     // 학습 데이터에 정규화 적용
+        normalizer.transform(testData);         // 테스트 데이터에 정규화 적용. 학습 데이터셋에서 계산된 통계를 이용
 
 
-        //Configure a simple model. We're not using an optimal configuration here, in order to show evaluation/errors, later
+        // 간단한 모델을 구성한다. 평가/오차를 표시하기 위해 최적의 구성을 사용하지는 않는다.
         final int numInputs = 4;
         int outputNum = 3;
         int iterations = 50;
@@ -99,21 +99,21 @@ public class CSVExampleEvaluationMetaData {
             .backprop(true).pretrain(false)
             .build();
 
-        //Fit the model
+        // 모델 피팅
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
         model.init();
         model.setListeners(new ScoreIterationListener(100));
 
         model.fit(trainingData);
 
-        //Evaluate the model on the test set
+        // 테스트셋으로 모델 평가
         Evaluation eval = new Evaluation(3);
         INDArray output = model.output(testData.getFeatureMatrix());
-        eval.eval(testData.getLabels(), output, testMetaData);          //Note we are passing in the test set metadata here
+        eval.eval(testData.getLabels(), output, testMetaData);          // 테스트셋 메타 데이터를 전달하고 있다
         System.out.println(eval.stats());
 
-        //Get a list of prediction errors, from the Evaluation object
-        //Prediction errors like this are only available after calling iterator.setCollectMetaData(true)
+        // Evaluation 객체에서 예측 오차 목록을 가져온다.
+        // 이와 같은 예측 오차는 iterator.setCollectMetaData(true)를 호출한 후에만 사용할 수 있다.
         List<Prediction> predictionErrors = eval.getPredictionErrors();
         System.out.println("\n\n+++++ Prediction Errors +++++");
         for(Prediction p : predictionErrors){
@@ -121,16 +121,16 @@ public class CSVExampleEvaluationMetaData {
                 + "\t" + p.getRecordMetaData(RecordMetaData.class).getLocation());
         }
 
-        //We can also load a subset of the data, to a DataSet object:
+        // 데이터의 하위 집합을 DataSet 객체에 로드할 수도 있다.
         List<RecordMetaData> predictionErrorMetaData = new ArrayList<>();
         for( Prediction p : predictionErrors ) predictionErrorMetaData.add(p.getRecordMetaData(RecordMetaData.class));
         DataSet predictionErrorExamples = iterator.loadFromMetaData(predictionErrorMetaData);
-        normalizer.transform(predictionErrorExamples);  //Apply normalization to this subset
+        normalizer.transform(predictionErrorExamples);  // 이 서브셋에 정규화 적용
 
-        //We can also load the raw data:
+        // 원본 데이터를 로드할 수도 있다.
         List<Record> predictionErrorRawData = recordReader.loadFromMetaData(predictionErrorMetaData);
 
-        //Print out the prediction errors, along with the raw data, normalized data, labels and network predictions:
+        // 원본 데이터, 정규화 된 데이터, 레이블, 네트워크 예측과 함께 예측 오차를 출력
         for(int i=0; i<predictionErrors.size(); i++ ){
             Prediction p = predictionErrors.get(i);
             RecordMetaData meta = p.getRecordMetaData(RecordMetaData.class);
@@ -148,9 +148,9 @@ public class CSVExampleEvaluationMetaData {
         }
 
 
-        //Some other useful evaluation methods:
-        List<Prediction> list1 = eval.getPredictions(1,2);                  //Predictions: actual class 1, predicted class 2
-        List<Prediction> list2 = eval.getPredictionByPredictedClass(2);     //All predictions for predicted class 2
-        List<Prediction> list3 = eval.getPredictionsByActualClass(2);       //All predictions for actual class 2
+        // 기타 유용한 평가 방법:
+        List<Prediction> list1 = eval.getPredictions(1,2);                  // 예측: 실제 클래스 1, 예측 클래스 2
+        List<Prediction> list2 = eval.getPredictionByPredictedClass(2);     //예측 클래스 2에 대한 모든 예측
+        List<Prediction> list3 = eval.getPredictionsByActualClass(2);       //실제 클래스 2에 대한 모든 예측
     }
 }
