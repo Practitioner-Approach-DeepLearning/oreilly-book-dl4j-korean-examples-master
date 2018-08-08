@@ -22,33 +22,33 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * This example trains a RNN. WHen trained we only have to put the first
- * character of LEARNSTRING to the RNN, and it will recite the following chars
+ * 이 예제는 RNN을 학습하는 예제이다. 
+ * 학습 후에는 RNN에 LEARNSTRING의 첫 번째 문자만 입력하면 된다. 그러면 다음 문자를 이야기할 것이다.
  *
  * @author Peter Grossmann
  */
 public class BasicRNNExample {
 
-	// define a sentence to learn
+	// 학습을 위한 문장
 	public static final char[] LEARNSTRING = "Der Cottbuser Postkutscher putzt den Cottbuser Postkutschkasten.".toCharArray();
 
-	// a list of all possible characters
+	// 모든 가능한 문자 리스트
 	public static final List<Character> LEARNSTRING_CHARS_LIST = new ArrayList<Character>();
 
-	// RNN dimensions
+	// RNN 디멘젼
 	public static final int HIDDEN_LAYER_WIDTH = 50;
 	public static final int HIDDEN_LAYER_CONT = 2;
 	public static final Random r = new Random(7894);
 
 	public static void main(String[] args) {
 
-		// create a dedicated list of possible chars in LEARNSTRING_CHARS_LIST
+		// LEARNSTRING_CHARS_LIST에 가능한 문자의 전용 목록을 만든다.
 		LinkedHashSet<Character> LEARNSTRING_CHARS = new LinkedHashSet<Character>();
 		for (char c : LEARNSTRING)
 			LEARNSTRING_CHARS.add(c);
 		LEARNSTRING_CHARS_LIST.addAll(LEARNSTRING_CHARS);
 
-		// some common parameters
+		// 공통 패턴
 		NeuralNetConfiguration.Builder builder = new NeuralNetConfiguration.Builder();
 		builder.iterations(10);
 		builder.learningRate(0.001);
@@ -61,93 +61,86 @@ public class BasicRNNExample {
 
 		ListBuilder listBuilder = builder.list();
 
-		// first difference, for rnns we need to use GravesLSTM.Builder
+		// 첫 번째 차이점은, GravesLSTM.Builder를 사용해야한다는 것이다.
 		for (int i = 0; i < HIDDEN_LAYER_CONT; i++) {
 			GravesLSTM.Builder hiddenLayerBuilder = new GravesLSTM.Builder();
 			hiddenLayerBuilder.nIn(i == 0 ? LEARNSTRING_CHARS.size() : HIDDEN_LAYER_WIDTH);
 			hiddenLayerBuilder.nOut(HIDDEN_LAYER_WIDTH);
-			// adopted activation function from GravesLSTMCharModellingExample
-			// seems to work well with RNNs
+			// GravesLSTMCharModellingExample의 활성 함수가 RNN과 잘 작동한다.
 			hiddenLayerBuilder.activation(Activation.TANH);
 			listBuilder.layer(i, hiddenLayerBuilder.build());
 		}
 
-		// we need to use RnnOutputLayer for our RNN
+		// RNN을 위해 RnnOutputLayer을 사용할 필요가 있다.
 		RnnOutputLayer.Builder outputLayerBuilder = new RnnOutputLayer.Builder(LossFunction.MCXENT);
-		// softmax normalizes the output neurons, the sum of all outputs is 1
-		// this is required for our sampleFromDistribution-function
+		// softmax는 출력 뉴런을 정규화하고, 모든 출력의 합이 1이 되도록 한다.
+		// 이것은 샘플분포함수에 필요하다.
 		outputLayerBuilder.activation(Activation.SOFTMAX);
 		outputLayerBuilder.nIn(HIDDEN_LAYER_WIDTH);
 		outputLayerBuilder.nOut(LEARNSTRING_CHARS.size());
 		listBuilder.layer(HIDDEN_LAYER_CONT, outputLayerBuilder.build());
 
-		// finish builder
+		//빌더 종료
 		listBuilder.pretrain(false);
 		listBuilder.backprop(true);
 
-		// create network
+		//신경망 생성
 		MultiLayerConfiguration conf = listBuilder.build();
 		MultiLayerNetwork net = new MultiLayerNetwork(conf);
 		net.init();
 		net.setListeners(new ScoreIterationListener(1));
 
 		/*
-		 * CREATE OUR TRAINING DATA
+		 * 학습데이터 생성
 		 */
-		// create input and output arrays: SAMPLE_INDEX, INPUT_NEURON,
-		// SEQUENCE_POSITION
+		// 입력 및 출력 배열 만들기 : SAMPLE_INDEX, INPUT_NEURON, SEQUENCE_POSITION
 		INDArray input = Nd4j.zeros(1, LEARNSTRING_CHARS_LIST.size(), LEARNSTRING.length);
 		INDArray labels = Nd4j.zeros(1, LEARNSTRING_CHARS_LIST.size(), LEARNSTRING.length);
-		// loop through our sample-sentence
+		// 예제 문장을 탐색
 		int samplePos = 0;
 		for (char currentChar : LEARNSTRING) {
-			// small hack: when currentChar is the last, take the first char as
-			// nextChar - not really required
+			// 작은 해킹 : currentChar가 마지막 일 때 첫 번째 char을 nextChar로 가져온다. - 꼭 필요한 것은 아니다.
 			char nextChar = LEARNSTRING[(samplePos + 1) % (LEARNSTRING.length)];
-			// input neuron for current-char is 1 at "samplePos"
+			// current-char에 대한 입력 뉴런은 "samplePos"에서 1이다.
 			input.putScalar(new int[] { 0, LEARNSTRING_CHARS_LIST.indexOf(currentChar), samplePos }, 1);
-			// output neuron for next-char is 1 at "samplePos"
+			// next-char에 대한 출력 뉴런은 "samplePos"에서 1이다.
 			labels.putScalar(new int[] { 0, LEARNSTRING_CHARS_LIST.indexOf(nextChar), samplePos }, 1);
 			samplePos++;
 		}
 		DataSet trainingData = new DataSet(input, labels);
 
-		// some epochs
+		// 에포크 시작
 		for (int epoch = 0; epoch < 100; epoch++) {
 
 			System.out.println("Epoch " + epoch);
 
-			// train the data
+			//데이터 학습
 			net.fit(trainingData);
 
-			// clear current stance from the last example
+			// 지난예제로부터 온 상태 초기화
 			net.rnnClearPreviousState();
 
-			// put the first caracter into the rrn as an initialisation
+			// 초기화를 위해 첫번째 문자를 RNN에 둔다.
 			INDArray testInit = Nd4j.zeros(LEARNSTRING_CHARS_LIST.size());
 			testInit.putScalar(LEARNSTRING_CHARS_LIST.indexOf(LEARNSTRING[0]), 1);
 
-			// run one step -> IMPORTANT: rnnTimeStep() must be called, not
-			// output()
-			// the output shows what the net thinks what should come next
+			// 한 단계 실행 -> 중요 : output()이 아니라 rnnTimeStep()이 호출 되어야한다. 출력은 신경망이 다음에 무엇을 생각하는지 보여준다.
 			INDArray output = net.rnnTimeStep(testInit);
 
-			// now the net sould guess LEARNSTRING.length mor characters
+			//이제 LEARNSTRING.length 보다 더 많은 문자가 예상되는 신경망을 추측해야한다.
 			for (int j = 0; j < LEARNSTRING.length; j++) {
 
-				// first process the last output of the network to a concrete
-				// neuron, the neuron with the highest output cas the highest
-				// cance to get chosen
+				// 처음에는 구체적인 뉴런에 대한 신경망의 최종 출력을 처리하고, 가장 높은 출력을 가진 뉴런은 가장 높은 선택을 받는다.
 				double[] outputProbDistribution = new double[LEARNSTRING_CHARS.size()];
 				for (int k = 0; k < outputProbDistribution.length; k++) {
 					outputProbDistribution[k] = output.getDouble(k);
 				}
 				int sampledCharacterIdx = findIndexOfHighestValue(outputProbDistribution);
 
-				// print the chosen output
+				// 선택한 출력을 출력하자
 				System.out.print(LEARNSTRING_CHARS_LIST.get(sampledCharacterIdx));
 
-				// use the last output as input
+				// 마지막 출력을 입력으로 사용
 				INDArray nextInput = Nd4j.zeros(LEARNSTRING_CHARS_LIST.size());
 				nextInput.putScalar(sampledCharacterIdx, 1);
 				output = net.rnnTimeStep(nextInput);

@@ -8,24 +8,16 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 
 /**
- * Pre saving the dataset is crucial.
- * Unlike with other frameworks that force you
- * to use 1 data format, deeplearning4j,
- * allows you to load arbitrary data, and also provides
- * tools such as datavec for pre processing a wide variety
- * of data from text, images, video, to log data.
- *
- * In this example, we pre show how to use a datasetiterator
- * to save pre save data.
- * In the other class {@link LoadPreSavedLenetMnistExample}
- * we then use the output to load data from the trainFolder
- * and testFolder.
- *
- * By pre saving the datasets, we save ALOT of time.
- * Anytime you end up trying to re do the processing every time
- * it ends up being a bottleneck.
- *
- * Pre saving the data allows you to have higher throughput during training.
+ * 미리 데이터셋을 저장하는 것은 중요하다.
+ * 하나의 데이터 형식을 사용해야하는 다른 프레임 워크와 달리 deeplearning4j를 사용하면 임의의 데이터를로드 할 수 있으며 
+ * 텍스트, 이미지, 비디오, 로그 데이터의 다양한 데이터를 사전처리 하기위한 datavec와 같은 도구도 제공한다.
+ *
+ * 이 예제에서는 PreSave 데이터를 저장하기 위해 데이터 선택기를 사용하는 방법을 미리 보여준다.
+ * 다른 클래스의 LoadPreSavedLenetMnistExample 클래스에서는 학습용폴더 및 테스트폴더에서 데이터를 로드하기 위해 출력을 사용한다.
+ *
+ * 데이터 셋을 미리 저장하면 시간을 많이 절약 할 수 있다.
+ * 병목이 될 때마다 처리를 다시 시도 할 때마다, 데이터를 미리 저장하면 학습 중에 처리량을 높일 수 있다.
+ *
  *
  * @author Adam Gibson
  */
@@ -33,11 +25,11 @@ public class PreSave {
     private static final Logger log = LoggerFactory.getLogger(LoadPreSavedLenetMnistExample.class);
 
     public static void main(String[] args) throws Exception {
-        int batchSize = 64; // Test batch size
+        int batchSize = 64; // 테스트 배치 데이터
 
 
         /*
-            Create an iterator using the batch size for one iteration
+           하나의 반복에 대한 배치 크기를 이용해 반복자를 작성해 보자.
          */
         log.info("Load data....");
         DataSetIterator mnistTrain = new MnistDataSetIterator(batchSize,true,12345);
@@ -47,28 +39,28 @@ public class PreSave {
         File testFolder = new File("testFolder");
         testFolder.mkdirs();
         log.info("Saving train data to " + trainFolder.getAbsolutePath() +  " and test data to " + testFolder.getAbsolutePath());
-        //Track the indexes of the files being saved.
-        //These batch indexes are used for indexing which minibatch is being saved by the iterator.
+        //저장할 파일의 인덱스를 추적하자.
+        //이러한 배치 인덱스는 반복기에 의해 저장되는 미니배치를 인덱싱하는 데 사용된다.
         int trainDataSaved = 0;
         int testDataSaved = 0;
         while(mnistTrain.hasNext()) {
-            //note that we use testDataSaved as an index in to which batch this is for the file
+            // 파일의 배치에 대한 인덱스로 testDataSaved를 사용한다.
             mnistTrain.next().save(new File(trainFolder,"mnist-train-" + trainDataSaved + ".bin"));
                                                                               //^^^^^^^
                                                                               //******************
-                                                                              //YOU NEED TO KNOW WHAT THIS IS.
-                                                                              //This is the index for the file saved.
+                                                                              //이것이 무엇인지 알아야한다.
+                                                                              //이것은 파일이 저장될 위치이다.
                                                                               //******************************************
             trainDataSaved++;
         }
 
         while(mnistTest.hasNext()) {
-            //note that we use testDataSaved as an index in to which batch this is for the file
+            // 파일의 배치에 대한 인덱스로 testDataSaved를 사용한다.
             mnistTest.next().save(new File(testFolder,"mnist-test-" + testDataSaved + ".bin"));
                                                                             //^^^^^^^
                                                                             //******************
-                                                                            //YOU NEED TO KNOW WHAT THIS IS.
-                                                                            //This is the index for the file saved.
+                                                                            //이것이 무엇인지 알아야한다.
+                                                                            //이것은 파일이 저장될 위치이다.
                                                                             //******************************************
             testDataSaved++;
         }
