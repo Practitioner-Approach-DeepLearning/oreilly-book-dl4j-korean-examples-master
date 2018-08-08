@@ -21,10 +21,10 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * This is an example that illustrates how to instantiate and use a custom activation function.
- * The example is identical to the one in org.deeplearning4j.examples.feedforward.regression.RegressionSum
- * except for the custom activation function
+ * 이 예제는 커스텀 활성화 함수를 인스턴스화하고 사용하는 방법을 보여줍니다.
+ * 이 예제는 커스텀 활성화 함수에 대한 내용을 제외하고는 org.deeplearning4j.examples.feedforward.regression.RegressionSum 과 같습니다.
  */
+
 public class CustomActivationExample {
     public static final int seed = 12345;
     public static final int iterations = 1;
@@ -41,7 +41,7 @@ public class CustomActivationExample {
 
         DataSetIterator iterator = getTrainingData(batchSize,rng);
 
-        //Create the network
+        //신경망 생성
         int numInput = 2;
         int numOutputs = 1;
         int nHidden = 10;
@@ -53,8 +53,9 @@ public class CustomActivationExample {
             .weightInit(WeightInit.XAVIER)
             .updater(Updater.NESTEROVS).momentum(0.95)
             .list()
-            //INSTANTIATING CUSTOM ACTIVATION FUNCTION here as follows
-            //Refer to CustomActivation class for more details on implementation
+            //여기에 사용자 활성화 함수를 다음과 같이 다시 설정하자.
+            //CustomActivation클래스의 implimentation을 참고하자
+
             .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
                 .activation(new CustomActivation())
                 .build())
@@ -66,13 +67,12 @@ public class CustomActivationExample {
         net.init();
         net.setListeners(new ScoreIterationListener(100));
 
-
-        //Train the network on the full data set, and evaluate in periodically
+        // 전체 데이터 셋을 바탕으로 신경망 학습, 주기적으로 신경망이 개선된다.
         for( int i=0; i<nEpochs; i++ ){
             iterator.reset();
             net.fit(iterator);
         }
-        // Test the addition of 2 numbers (Try different numbers here)
+        // 2 개의 숫자 추가 테스트 (여기서 다른 숫자를 시도하자)
         final INDArray input = Nd4j.create(new double[] { 0.111111, 0.3333333333333 }, new int[] { 1, 2 });
         INDArray out = net.output(input, false);
         System.out.println(out);

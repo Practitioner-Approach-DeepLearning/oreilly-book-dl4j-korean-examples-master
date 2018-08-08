@@ -16,14 +16,15 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 import java.io.File;
 
 /**
- * A very simple example for saving and loading a ComputationGraph
+ * ComputationGraph를 저장하고 로드할 수 있는 가장 쉬운 예제
  *
  * @author Alex Black
  */
+
 public class SaveLoadComputationGraph {
 
     public static void main(String[] args) throws Exception {
-        //Define a simple ComputationGraph:
+        //간단한 ComputationGraph 정의
         ComputationGraphConfiguration conf = new NeuralNetConfiguration.Builder()
             .weightInit(WeightInit.XAVIER)
             .updater(Updater.NESTEROVS)
@@ -38,13 +39,12 @@ public class SaveLoadComputationGraph {
         ComputationGraph net = new ComputationGraph(conf);
         net.init();
 
-
-        //Save the model
-        File locationToSave = new File("MyComputationGraph.zip");       //Where to save the network. Note: the file is in .zip format - can be opened externally
-        boolean saveUpdater = true;                                             //Updater: i.e., the state for Momentum, RMSProp, Adagrad etc. Save this if you want to train your network more in the future
+        // 모델 저장
+        File locationToSave = new File("MyComputationGraph.zip");       //신경망을 저장할 위치. 참고 : 파일은 .zip 형식이며 외부에서 열 수 있다..
+        boolean saveUpdater = true;                                             //업데이터: 모멘텀, RMSProp, Adagrad 등의 상태, 나중에 신경망을 더 많이 훈련하려면 해당 내용을 저장하자.
         ModelSerializer.writeModel(net, locationToSave, saveUpdater);
 
-        //Load the model
+        // 모델 로드
         ComputationGraph restored = ModelSerializer.restoreComputationGraph(locationToSave);
 
 

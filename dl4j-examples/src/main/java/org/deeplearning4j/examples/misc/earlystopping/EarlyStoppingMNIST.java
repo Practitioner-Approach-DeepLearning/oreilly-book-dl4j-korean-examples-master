@@ -39,6 +39,15 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Alex Black
  */
+/**MNIST 일부를 사용해서 빠르게 중단되는 예제
+ * 아이디어: 주어진 MNIST의 작은 집합 (1000개 사례 + 500개 시험셋)을 바탕으로 학습하고 최소 시험 셋 손실을 갖는 파라미터를 얻는다.
+ * 이것은 지나치게 단순화된 예제이다. 하지만 여기에 사용 된 원칙이 보다 현실적인 경우에 적용되기도 한다.
+ *
+ * 이것의 자세한 내용을 알고 싶다면 http://deeplearning4j.org/earlystopping.html 을 참고하자
+ *
+ * @author Alex Black
+ */
+
 public class EarlyStoppingMNIST {
 
     public static void main(String[] args) throws Exception {
@@ -74,7 +83,7 @@ public class EarlyStoppingMNIST {
                 .nOut(outputNum)
                 .activation(Activation.SOFTMAX)
                 .build())
-            .setInputType(InputType.convolutionalFlat(28, 28, 1)) //See note in LenetMnistExample
+            .setInputType(InputType.convolutionalFlat(28, 28, 1)) //LenetMnistExample 참고
             .backprop(true).pretrain(false).build();
 
         //Get data:
@@ -85,16 +94,16 @@ public class EarlyStoppingMNIST {
         String exampleDirectory = FilenameUtils.concat(tempDir, "DL4JEarlyStoppingExample/");
         EarlyStoppingModelSaver saver = new LocalFileModelSaver(exampleDirectory);
         EarlyStoppingConfiguration esConf = new EarlyStoppingConfiguration.Builder()
-                .epochTerminationConditions(new MaxEpochsTerminationCondition(50)) //Max of 50 epochs
+                .epochTerminationConditions(new MaxEpochsTerminationCondition(50)) //최대 50 에포크까지
                 .evaluateEveryNEpochs(1)
-                .iterationTerminationConditions(new MaxTimeIterationTerminationCondition(20, TimeUnit.MINUTES)) //Max of 20 minutes
-                .scoreCalculator(new DataSetLossCalculator(mnistTest512, true))     //Calculate test set score
+                .iterationTerminationConditions(new MaxTimeIterationTerminationCondition(20, TimeUnit.MINUTES)) //최대 20분
+                .scoreCalculator(new DataSetLossCalculator(mnistTest512, true))     //시험 셋 결과를 계산
                 .modelSaver(saver)
                 .build();
 
         EarlyStoppingTrainer trainer = new EarlyStoppingTrainer(esConf,configuration,mnistTrain1024);
 
-        //Conduct early stopping training:
+        //조기 중단 학습 시작
         EarlyStoppingResult result = trainer.fit();
         System.out.println("Termination reason: " + result.getTerminationReason());
         System.out.println("Termination details: " + result.getTerminationDetails());
@@ -102,7 +111,7 @@ public class EarlyStoppingMNIST {
         System.out.println("Best epoch number: " + result.getBestModelEpoch());
         System.out.println("Score at best epoch: " + result.getBestModelScore());
 
-        //Print score vs. epoch
+        //score vs epoch를 출력
         Map<Integer,Double> scoreVsEpoch = result.getScoreVsEpoch();
         List<Integer> list = new ArrayList<>(scoreVsEpoch.keySet());
         Collections.sort(list);

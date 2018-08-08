@@ -22,10 +22,12 @@ import java.util.*;
 
 /**
  * Created by susaneraly on 11/9/16.
- * This is an example that illustrates how to instantiate and use a custom loss function.
- * The example is identical to the one in org.deeplearning4j.examples.feedforward.regression.RegressionSum
- * except for the custom loss function
+ * 이것은 커스텀 손실 함수를 만드는 방법에 대한 예제이다.
+ * 이 예제는 커스텀 손실 함수를 제외하고 org.deeplearning4j.examples.feedforward.regression.RegressionSum
+ * 과 동일하다.
  */
+
+
 public class CustomLossExample {
     public static final int seed = 12345;
     public static final int iterations = 1;
@@ -41,11 +43,11 @@ public class CustomLossExample {
     public static void main(String[] args) {
         doTraining();
 
-        //THE FOLLOWING IS TO ILLUSTRATE A SIMPLE GRADIENT CHECK.
-        //It checks the implementation against the finite difference approximation, to ensure correctness
-        //You will have to write your own gradient checks.
-        //Use the code below and the following for reference.
-        //  deeplearning4j/deeplearning4j-core/src/test/java/org/deeplearning4j/gradientcheck/LossFunctionGradientCheck.java
+        // 이것은 기울기 체커를 간단히 나타낸 것이다.
+        // 정확성을 보장하기 위해 한정된 차이 근사치와 비교하여 구현을 확인한다.
+        // 반드시 직접 작성한 기울기 체커를 사용해야 한다.
+        // 아래 코드를 사용하거나 다음을 참고하자
+        // deeplearning4j/deeplearning4j-core/src/test/java/org/deeplearning4j/gradientcheck/LossFunctionGradientCheck.java
         doGradientCheck();
     }
 
@@ -53,7 +55,7 @@ public class CustomLossExample {
 
         DataSetIterator iterator = getTrainingData(batchSize,rng);
 
-        //Create the network
+        // 신경망 생성
         int numInput = 2;
         int numOutputs = 1;
         int nHidden = 10;
@@ -68,8 +70,8 @@ public class CustomLossExample {
             .layer(0, new DenseLayer.Builder().nIn(numInput).nOut(nHidden)
                 .activation(Activation.TANH)
                 .build())
-                //INSTANTIATE CUSTOM LOSS FUNCTION here as follows
-                //Refer to CustomLossL1L2 class for more details on implementation
+                // 즉시 커스텀 손실 함수를 아래와 같이 다시 설정
+                // 구현에 대한 자세한 내용은 CustomLossL1L2 클래스를 참조하자.
             .layer(1, new OutputLayer.Builder(new CustomLossL1L2())
                 .activation(Activation.IDENTITY)
                 .nIn(nHidden).nOut(numOutputs).build())
@@ -78,13 +80,12 @@ public class CustomLossExample {
         net.init();
         net.setListeners(new ScoreIterationListener(100));
 
-
-        //Train the network on the full data set, and evaluate in periodically
+        // 전체 데이터 집합에 대해 신경망을 교육하고 주기적으로 평가한다.
         for( int i=0; i<nEpochs; i++ ){
             iterator.reset();
             net.fit(iterator);
         }
-        // Test the addition of 2 numbers (Try different numbers here)
+        // 추가적으로 두개의 숫자를 더 테스트 해보자 (각각 다른 숫자로 해볼 것)
         final INDArray input = Nd4j.create(new double[] { 0.111111, 0.3333333333333 }, new int[] { 1, 2 });
         INDArray out = net.output(input, false);
         System.out.println(out);
@@ -133,7 +134,7 @@ public class CustomLossExample {
                 NdIndexIterator iterPreOut = new NdIndexIterator(preOut.shape());
                 while (iterPreOut.hasNext()) {
                     int[] next = iterPreOut.next();
-                    //checking gradient with total score wrt to each output feature in label
+                    // 라벨의 각 출력 특징에 대한 총 스코어가 있는 기울기 검사
                     double before = preOut.getDouble(next);
                     preOut.putScalar(next, before + epsilon);
                     double scorePlus = lossfn.computeScore(label, preOut, activation, null, true);
@@ -171,9 +172,17 @@ public class CustomLossExample {
         tanh: range is between -1 and 1
 
      */
+    /* 이 함수는 위의 기울기 체크를 위한 유틸형 함수이다
+        활성화 함수에 따른 올바른 범위에서 임의로 라벨을 생성한다.
+        가우시안 활용: 범위는 상관하지않는다.
+        relu: 범위에 음수는 존재하지 않는다.
+        softmax: 범위는 음수가 아니면서 최대 1을 더한다.
+        sigmoid: 범위가 0~1사이다.
+        tanh: 범위가 -1~1 사이다.
+
+     */
     public static List<INDArray> makeLabels(IActivation activation,int[]labelSize) {
-        //edge cases are label size of one for everything except softmax which is two
-        //+ve and -ve values, zero and non zero values, less than zero/greater than zero
+        // 두 개의 + ve 및 -ve 값, 0과 0이 아닌 값, 0보다 작거나 0보다 큰 softmax를 제외한 모든 것에 대한 라벨 크기이다.
         List<INDArray> returnVals = new ArrayList<>(labelSize.length);
         for (int i=0; i< labelSize.length; i++) {
             int aLabelSize = labelSize[i];
