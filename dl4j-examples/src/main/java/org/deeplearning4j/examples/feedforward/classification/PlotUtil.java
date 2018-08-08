@@ -23,17 +23,17 @@ import org.nd4j.linalg.factory.Nd4j;
 import javax.swing.*;
 import java.awt.*;
 
-/**Simple plotting methods for the MLPClassifier examples
- * @author Alex Black
+/**MLPClassifier 예제를 위한 간단한 플로팅 방법
+ * @author 알렉스 블랙
  */
 public class PlotUtil {
 
-    /**Plot the training data. Assume 2d input, classification output
-     * @param features Training data features
-     * @param labels Training data labels (one-hot representation)
-     * @param backgroundIn sets of x,y points in input space, plotted in the background
-     * @param backgroundOut results of network evaluation at points in x,y points in space
-     * @param nDivisions Number of points (per axis, for the backgroundIn/backgroundOut arrays)
+    /** 학습 데이터 플롯하기. 2D 입력, 분류 출력을 가정
+     * @param features 학습 데이터 특징
+     * @param labels 학습 데이터 레이블 (원-핫 표현)
+     * @param backgroundIn 입력 공간의 x, y 좌표 셋. 백그라운드에서 플롯됨
+     * @param backgroundOut x, y 좌표에 대한 신경망 평가 결과
+     * @param nDivisions 좌표 개수 (축당, backgroundIn/backgroundOut 배열 크기를 지정)
      */
     public static void plotTrainingData(INDArray features, INDArray labels, INDArray backgroundIn, INDArray backgroundOut, int nDivisions){
         double[] mins = backgroundIn.min(0).data().asDouble();
@@ -51,13 +51,13 @@ public class PlotUtil {
         f.setVisible(true);
     }
 
-    /**Plot the training data. Assume 2d input, classification output
-     * @param features Training data features
-     * @param labels Training data labels (one-hot representation)
-     * @param predicted Network predictions, for the test points
-     * @param backgroundIn sets of x,y points in input space, plotted in the background
-     * @param backgroundOut results of network evaluation at points in x,y points in space
-     * @param nDivisions Number of points (per axis, for the backgroundIn/backgroundOut arrays)
+    /** 학습 데이터 플롯하기. 2D 입력, 분류 출력을 가정
+     * @param features 학습 데이터 특징
+     * @param labels 학습 데이터 레이블 (원-핫 표현)
+     * @param predicted 테스트 좌표에 대한 신경망 예측
+     * @param backgroundIn 입력 공간의 x, y 좌표 셋. 백그라운드에서 플롯됨
+     * @param backgroundOut x, y 좌표에 대한 신경망 평가 결과
+     * @param nDivisions 좌표 개수 (축당, backgroundIn/backgroundOut 배열 크기를 지정)
      */
     public static void plotTestData(INDArray features, INDArray labels, INDArray predicted, INDArray backgroundIn, INDArray backgroundOut, int nDivisions){
 
@@ -78,7 +78,7 @@ public class PlotUtil {
     }
 
 
-    /**Create data for the background data set
+    /** 백그라운드 데이터셋 생성
      */
     private static XYZDataset createBackgroundData(INDArray backgroundIn, INDArray backgroundOut) {
         int nRows = backgroundIn.rows();
@@ -98,7 +98,7 @@ public class PlotUtil {
         return dataset;
     }
 
-    //Training data
+    // 학습 데이터
     private static XYDataset createDataSetTrain(INDArray features, INDArray labels ){
         int nRows = features.rows();
 
@@ -117,7 +117,7 @@ public class PlotUtil {
         return c;
     }
 
-    //Test data
+    // 테스트 데이터
     private static XYDataset createDataSetTest(INDArray features, INDArray labels, INDArray predicted ){
         int nRows = features.rows();
 

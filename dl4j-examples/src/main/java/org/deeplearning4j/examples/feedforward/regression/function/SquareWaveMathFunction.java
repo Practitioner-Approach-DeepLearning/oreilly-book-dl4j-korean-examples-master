@@ -6,10 +6,10 @@ import org.nd4j.linalg.api.ops.impl.transforms.Sin;
 import org.nd4j.linalg.factory.Nd4j;
 
 /**
- * Sign(x) or Sign of a real number, x, is -1 if x is negative, 0 if x is zero and 1 if x is positive.
+ * 부호(x) 또는 실수 x에 대한 부호는 x가 음수이면 01, x가 0이면 0, x가 양수이면 1이다.
  *
- * Calculate function value of Sign of Sine of x, which can be -1, 0 or 1.
- * The three possible outputs of Sign(sin) will form a line that resembles "squares" in the graph.
+ * 사인 x의 부호 함수 값은 -1, 0, 1일 수 있다.
+ * 부호(사인)의 세 가지 출력은 그래프에서 정사각형과 유사한 선을 형성한다.
  */
 public class SquareWaveMathFunction implements MathFunction {
 

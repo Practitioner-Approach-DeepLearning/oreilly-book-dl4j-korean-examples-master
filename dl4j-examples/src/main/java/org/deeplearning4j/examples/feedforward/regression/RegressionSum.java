@@ -21,24 +21,24 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Created by Anwar on 3/15/2016.
- * An example of regression neural network for performing addition
+ * 3/15/2016에 Anwar가 생성.
+ * 추가적인 신경망 회귀 예제
  */
 public class RegressionSum {
-    //Random number generator seed, for reproducability
+    // 재현성을 위해 난수 생성기 시드를 고정
     public static final int seed = 12345;
-    //Number of iterations per minibatch
+    // 미니 배치당 반복 횟수
     public static final int iterations = 1;
-    //Number of epochs (full passes of the data)
+    // 에포크 횟수 (전체 데이터 처리)
     public static final int nEpochs = 200;
-    //Number of data points
+    // 데이터 좌표 개수
     public static final int nSamples = 1000;
-    //Batch size: i.e., each epoch has nSamples/batchSize parameter updates
+    // 배치 크기: 즉, 에포크는 nSample/batchSize번 매개변수 업데이트한다
     public static final int batchSize = 100;
-    //Network learning rate
+    // 신경망 학습률
     public static final double learningRate = 0.01;
-    // The range of the sample data, data in range (0-1 is sensitive for NN, you can try other ranges and see how it effects the results
-    // also try changing the range along with changing the activation function
+    // 샘플 데이터의 범위, (0-1) 범위 내의 데이터는 신경망에서 민감하다. 다른 범위를 시도했을 때 결과가 어떻게 달라지는지 확인해보라.
+    // 또한 활성값 함수 변경시에도 범위를 변경해보라.
     public static int MIN_RANGE = 0;
     public static int MAX_RANGE = 3;
 
@@ -46,10 +46,10 @@ public class RegressionSum {
 
     public static void main(String[] args){
 
-        //Generate the training data
+        // 학습 데이터 생성
         DataSetIterator iterator = getTrainingData(batchSize,rng);
 
-        //Create the network
+        // 신경망 생성
         int numInput = 2;
         int numOutputs = 1;
         int nHidden = 10;
@@ -73,12 +73,12 @@ public class RegressionSum {
         net.setListeners(new ScoreIterationListener(1));
 
 
-        //Train the network on the full data set, and evaluate in periodically
+        // 신경망을 전체 데이터셋에서 학습하고 주기적으로 평가
         for( int i=0; i<nEpochs; i++ ){
             iterator.reset();
             net.fit(iterator);
         }
-        // Test the addition of 2 numbers (Try different numbers here)
+        // 숫자 2개를 추가로 테스트 (다른 숫자도 시도해보라)
         final INDArray input = Nd4j.create(new double[] { 0.111111, 0.3333333333333 }, new int[] { 1, 2 });
         INDArray out = net.output(input, false);
         System.out.println(out);

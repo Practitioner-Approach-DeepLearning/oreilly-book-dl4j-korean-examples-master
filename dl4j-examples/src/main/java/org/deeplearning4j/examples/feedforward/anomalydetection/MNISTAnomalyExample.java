@@ -27,21 +27,18 @@ import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
 
-/**Example: Anomaly Detection on MNIST using simple autoencoder without pretraining
- * The goal is to identify outliers digits, i.e., those digits that are unusual or
- * not like the typical digits.
- * This is accomplished in this example by using reconstruction error: stereotypical
- * examples should have low reconstruction error, whereas outliers should have high
- * reconstruction error
+/**예제: 사전학습 없이 간단한 오토인코더를 사용한 MNIST의 이상 징후 탐지
+ * 특이한 숫자를 식별하는 것이 목표다. 즉, 비정상적이거나 일반적인 숫자와 다른 숫자를 식별한다.
+ * 이 예제에서는 재구성 오차를 사용한다. 전형적인 입력 데이터는 재구성 오차가 낮지만 특이한 데이터는 재구성 오차가 높다.
  *
- * @author Alex Black
+ * @author 알렉스 블랙
  */
 public class MNISTAnomalyExample {
 
     public static void main(String[] args) throws Exception {
 
-        //Set up network. 784 in/out (as MNIST images are 28x28).
-        //784 -> 250 -> 10 -> 250 -> 784
+        // 신경망 설정. 784 입/출력 (MNIST 이미지 크기가 28 x 28이므로)
+        // 784 -> 250 -> 10 -> 250 -> 784
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(12345)
                 .iterations(1)
@@ -67,7 +64,7 @@ public class MNISTAnomalyExample {
         MultiLayerNetwork net = new MultiLayerNetwork(conf);
         net.setListeners(Collections.singletonList((IterationListener) new ScoreIterationListener(1)));
 
-        //Load data and split into training and testing sets. 40000 train, 10000 test
+        // 데이터를 불러와 학습셋과 테스트셋으로 분할한다. 학습셋 40000개, 테스트셋 10000개
         DataSetIterator iter = new MnistDataSetIterator(100,50000,false);
 
         List<INDArray> featuresTrain = new ArrayList<>();
@@ -77,15 +74,15 @@ public class MNISTAnomalyExample {
         Random r = new Random(12345);
         while(iter.hasNext()){
             DataSet ds = iter.next();
-            SplitTestAndTrain split = ds.splitTestAndTrain(80, r);  //80/20 split (from miniBatch = 100)
+            SplitTestAndTrain split = ds.splitTestAndTrain(80, r);  // 80 : 20 으로 분할 (미니 배치가 100일 때)
             featuresTrain.add(split.getTrain().getFeatureMatrix());
             DataSet dsTest = split.getTest();
             featuresTest.add(dsTest.getFeatureMatrix());
-            INDArray indexes = Nd4j.argMax(dsTest.getLabels(),1); //Convert from one-hot representation -> index
+            INDArray indexes = Nd4j.argMax(dsTest.getLabels(),1); // 원-핫 표현으로 변환 -> 인덱스
             labelsTest.add(indexes);
         }
 
-        //Train model:
+        // 모델 학습하기
         int nEpochs = 30;
         for( int epoch=0; epoch<nEpochs; epoch++ ){
             for(INDArray data : featuresTrain){
@@ -94,10 +91,10 @@ public class MNISTAnomalyExample {
             System.out.println("Epoch " + epoch + " complete");
         }
 
-        //Evaluate the model on test data
-        //Score each digit/example in test set separately
-        //Then add triple (score, digit, and INDArray data) to lists and sort by score
-        //This allows us to get best N and worst N digits for each type
+        // 테스트 데이터로 모델 평가
+        // 각 숫자/입력 데이터를 테스트셋으로 점수 매기기
+        // 그런 다음 값 3개(점수, 숫자, INDArray 데이터)를 리스트에 추가한 후 점수에 따라 정렬
+        // 그러면 각 숫자 유형 별로 최고 점수 N개, 최저 점수 N개를 뽑을 수 있다
         Map<Integer,List<Triple<Double,Integer,INDArray>>> listsByDigit = new HashMap<>();
         for( int i=0; i<10; i++ ) listsByDigit.put(i,new ArrayList<Triple<Double,Integer,INDArray>>());
 
@@ -114,7 +111,7 @@ public class MNISTAnomalyExample {
             }
         }
 
-        //Sort data by score, separately for each digit
+        // 각 숫자별로 점수로 정렬
         Comparator<Triple<Double, Integer, INDArray>> c = new Comparator<Triple<Double, Integer, INDArray>>() {
             @Override
             public int compare(Triple<Double, Integer, INDArray> o1, Triple<Double, Integer, INDArray> o2) {
@@ -126,7 +123,7 @@ public class MNISTAnomalyExample {
             Collections.sort(list, c);
         }
 
-        //Select the 5 best and 5 worst numbers (by reconstruction error) for each digit
+        // 각 숫자별로 최고 점수 5개, 최저 점수 5개 선택 (재구성 오차 기준)
         List<INDArray> best = new ArrayList<>(50);
         List<INDArray> worst = new ArrayList<>(50);
         for( int i=0; i<10; i++ ){
@@ -137,7 +134,7 @@ public class MNISTAnomalyExample {
             }
         }
 
-        //Visualize the best and worst digits
+        // 최고 / 최저 숫자를 화면에 표시
         MNISTVisualizer bestVisualizer = new MNISTVisualizer(2.0,best,"Best (Low Rec. Error)");
         bestVisualizer.visualize();
 
@@ -147,7 +144,7 @@ public class MNISTAnomalyExample {
 
     public static class MNISTVisualizer {
         private double imageScale;
-        private List<INDArray> digits;  //Digits (as row vectors), one per INDArray
+        private List<INDArray> digits;  // INDArray 한 개당 숫자 하나 (행 벡터 형태)
         private String title;
         private int gridWidth;
 

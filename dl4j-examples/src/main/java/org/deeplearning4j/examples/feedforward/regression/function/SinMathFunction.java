@@ -5,7 +5,7 @@ import org.nd4j.linalg.api.ops.impl.transforms.Sin;
 import org.nd4j.linalg.factory.Nd4j;
 
 /**
- * Calculate function value of sine of x.
+ * x의 사인 값을 계싼하는 함수
  */
 public class SinMathFunction implements MathFunction {
 

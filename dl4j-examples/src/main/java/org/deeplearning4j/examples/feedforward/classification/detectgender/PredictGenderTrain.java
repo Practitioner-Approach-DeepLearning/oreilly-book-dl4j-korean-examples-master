@@ -1,7 +1,7 @@
 package org.deeplearning4j.examples.feedforward.classification.detectgender;
 
 /**
- * Created by KIT Solutions (www.kitsol.com) on 9/28/2016.
+ * 9/28/2016에 KIT Solutions (www.kitsol.com)가 생성.
  */
 
 import org.datavec.api.split.FileSplit;
@@ -27,8 +27,8 @@ import java.io.*;
 import java.util.ArrayList;
 
 /**
- * - Notes:
- *  - Data files are stored at following location
+ * - 참고:
+ *  - 데이터 파일은 다음 위치에 저장된다.
  *  .\dl4j-0.4-examples-master\dl4j-examples\src\main\resources\PredictGender\Data folder
  */
 
@@ -45,12 +45,12 @@ public class PredictGenderTrain
     }
 
     /**
-     * This function uses GenderRecordReader and passes it to RecordReaderDataSetIterator for further training.
+     * 이 메서드는 GenderRecordReader를 사용하고 RecordReaderDataSetIterator 사용해 추가로 학습한다.
      */
     public void train()
     {
         int seed = 123456;
-        double learningRate = 0.005;// was .01 but often got errors: "o.d.optimize.solvers.BaseOptimizer - Hit termination condition on iteration 0"
+        double learningRate = 0.005;// 이전에는 .01을 사용했으나 종종 에러가 발생했다: "o.d.optimize.solvers.BaseOptimizer - Hit termination condition on iteration 0"
         int batchSize = 100;
         int nEpochs = 100;
         int numInputs = 0;

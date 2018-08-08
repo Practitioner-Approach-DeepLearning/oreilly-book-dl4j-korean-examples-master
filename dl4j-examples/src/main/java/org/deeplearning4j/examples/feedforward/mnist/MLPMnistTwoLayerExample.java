@@ -21,25 +21,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-/** A slightly more involved multilayered (MLP) applied to digit classification for the MNIST dataset (http://yann.lecun.com/exdb/mnist/).
+/** MNIST 데이터셋(http://yann.lecun.com/exdb/mnist/)의 숫자 분류에 적용되는 약간 더 발전한 다층 퍼셉트론(MLP) .
 *
-* This example uses two input layers and one hidden layer.
+* 이 예제는 두 개의 입력 계층과 하나의 은닉 계층을 사용한다.
 *
-* The first input layer has input dimension of numRows*numColumns where these variables indicate the
-* number of vertical and horizontal pixels in the image. This layer uses a rectified linear unit
-* (relu) activation function. The weights for this layer are initialized by using Xavier initialization
+* 입력 계층의 입력 차원은 numRows * numColumns개이며 여기서 이 변수는 이미지의 수직, 수평 픽셀수를 의미한다.
+* 이 계층은 RELU 활성화 함수를 사용한다. 이 계층의 가중치는 급격한 상승을 방지하기 위해 그자비에 초기화
 * (https://prateekvjoshi.com/2016/03/29/understanding-xavier-initialization-in-deep-neural-networks/)
-* to avoid having a steep learning curve. This layer sends 500 output signals to the second layer.
+* 를 사용해 초기화한다. 이 계층은 출력 신호 500개를 두번째 계층으로 보낸다.
 *
-* The second input layer has input dimension of 500. This layer also uses a rectified linear unit
-* (relu) activation function. The weights for this layer are also initialized by using Xavier initialization
+* 두번째 입력 계층의 입력 차원은 500개다. 또한 이 계층은 RELU 활성화 함수르 사용한다. 이 계층의 가중치는 급격한 상승을 방지하기 위해 그자비에 초기화
 * (https://prateekvjoshi.com/2016/03/29/understanding-xavier-initialization-in-deep-neural-networks/)
-* to avoid having a steep learning curve. This layer sends 100 output signals to the hidden layer.
+* 를 사용해 초기화한다. 이 계층은 출력 신호 100개를 은닉 계층으로 보낸다.
 *
-* The hidden layer has input dimensions of 100. These are fed from the second input layer. The weights
-* for this layer is also initialized using Xavier initialization. The activation function for this
-* layer is a softmax, which normalizes all the 10 outputs such that the normalized sums
-* add up to 1. The highest of these normalized values is picked as the predicted class.
+* 은닉 계층의 입력 차원은 100개다. 이들은 두번째 입력 계층에서 공급된다. 또한 이 계층의 가중치는 그자비에 초기화를 사용해 초기화된다.
+* 이 계층은 정규화된 합계가 1이 될 수 있도록 10개의 출력을 모두 정규화하는 소프트맥스를 의 활성화 함수로 사용한다.
+* 정규화된 값 중 가장 높은 값을 예측된 클래스로 선택한다.
 *
 */
 public class MLPMnistTwoLayerExample {
@@ -47,50 +44,50 @@ public class MLPMnistTwoLayerExample {
     private static Logger log = LoggerFactory.getLogger(MLPMnistSingleLayerExample.class);
 
     public static void main(String[] args) throws Exception {
-        //number of rows and columns in the input pictures
+        // 입력 이미지의 행과 열 개수
         final int numRows = 28;
         final int numColumns = 28;
-        int outputNum = 10; // number of output classes
-        int batchSize = 64; // batch size for each epoch
-        int rngSeed = 123; // random number seed for reproducibility
-        int numEpochs = 15; // number of epochs to perform
-        double rate = 0.0015; // learning rate
+        int outputNum = 10; // 출력 클래스 개수
+        int batchSize = 64; // 에포크당 배치 크기
+        int rngSeed = 123; // 재현성을 위해 난수 생성 시드 고정
+        int numEpochs = 15; // 수행할 에포크 횟수
+        double rate = 0.0015; // 학습률
 
-        //Get the DataSetIterators:
+        // DataSetIterators 생성
         DataSetIterator mnistTrain = new MnistDataSetIterator(batchSize, true, rngSeed);
         DataSetIterator mnistTest = new MnistDataSetIterator(batchSize, false, rngSeed);
 
 
         log.info("Build model....");
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-            .seed(rngSeed) //include a random seed for reproducibility
-            .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT) // use stochastic gradient descent as an optimization algorithm
+            .seed(rngSeed) // 재현성을 위해 난수 생성 시드 포함
+            .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT) // 확률적 경사 하강법을 최적화 알고리즘으로 사용
             .iterations(1)
             .activation(Activation.RELU)
             .weightInit(WeightInit.XAVIER)
-            .learningRate(rate) //specify the learning rate
-            .updater(Updater.NESTEROVS).momentum(0.98) //specify the rate of change of the learning rate.
-            .regularization(true).l2(rate * 0.005) // regularize learning model
+            .learningRate(rate) // 학습률 명시
+            .updater(Updater.NESTEROVS).momentum(0.98) // 학습률 변화율 지정
+            .regularization(true).l2(rate * 0.005) // 학습 모델 규제
             .list()
-            .layer(0, new DenseLayer.Builder() //create the first input layer.
+            .layer(0, new DenseLayer.Builder() // 첫번째 입력 계층 생성
                     .nIn(numRows * numColumns)
                     .nOut(500)
                     .build())
-            .layer(1, new DenseLayer.Builder() //create the second input layer
+            .layer(1, new DenseLayer.Builder() // 두번째 입력 계층 생성
                     .nIn(500)
                     .nOut(100)
                     .build())
-            .layer(2, new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD) //create hidden layer
+            .layer(2, new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD) // 은닉 계층 생성
                     .activation(Activation.SOFTMAX)
                     .nIn(100)
                     .nOut(outputNum)
                     .build())
-            .pretrain(false).backprop(true) //use backpropagation to adjust weights
+            .pretrain(false).backprop(true) // 가중치 갱신을 위해 역전파 사용
             .build();
 
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
         model.init();
-        model.setListeners(new ScoreIterationListener(5));  //print the score with every iteration
+        model.setListeners(new ScoreIterationListener(5));  // 반복 마다 점수 출력
 
         log.info("Train model....");
         for( int i=0; i<numEpochs; i++ ){
@@ -100,11 +97,11 @@ public class MLPMnistTwoLayerExample {
 
 
         log.info("Evaluate model....");
-        Evaluation eval = new Evaluation(outputNum); //create an evaluation object with 10 possible classes
+        Evaluation eval = new Evaluation(outputNum); // 클래스 10개에 대한 평가 객체 생성
         while(mnistTest.hasNext()){
             DataSet next = mnistTest.next();
-            INDArray output = model.output(next.getFeatureMatrix()); //get the networks prediction
-            eval.eval(next.getLabels(), output); //check the prediction against the true class
+            INDArray output = model.output(next.getFeatureMatrix()); // 신경망 예측 가져오기
+            eval.eval(next.getLabels(), output); // 정답과 예측 비교하기
         }
 
         log.info(eval.stats());

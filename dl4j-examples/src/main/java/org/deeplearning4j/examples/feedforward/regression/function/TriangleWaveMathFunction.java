@@ -4,7 +4,7 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
 /**
- * Calculate function value of Triangle Wave, which is an absolute value of Sawtooth Wave.
+ * Sawtooth 파형의 절대 값인, Triangle 파형의 값을 계산하는 함수.
  *
  */
 public class TriangleWaveMathFunction implements MathFunction {
@@ -17,7 +17,7 @@ public class TriangleWaveMathFunction implements MathFunction {
         for (int i = 0; i < xd.length; i++) {
             yd[i] = Math.abs(2 * (xd[i] / period - Math.floor(xd[i] / period + 0.5)));
         }
-        return Nd4j.create(yd, new int[]{xd.length, 1});  //Column vector
+        return Nd4j.create(yd, new int[]{xd.length, 1});  // 열 벡터
     }
 
     @Override
