@@ -1,7 +1,7 @@
 package org.deeplearning4j.examples.feedforward.classification.detectgender;
 
 /**
- * Created by KIT Solutions (www.kitsol.com) on 11/7/2016.
+ * 11/7/2016에 KIT Solutions (www.kitsol.com)가 생성.
  */
 
 import java.io.File;
@@ -24,37 +24,37 @@ import org.deeplearning4j.berkeley.Pair;
 
 
 /**
- * GenderRecordReader class does following job
- * - Initialize method reads .CSV file as specified in Labels in constructor
- * - It loads person name and gender data into binary converted data
- * - creates binary string iterator which can be used by RecordReaderDataSetIterator
+ * GenderRecordReader 클래스는 다음 작업을 수행한다.
+ * - 초기화 메서드에서 생성자의 레이블에 지정된 CSV 파일을 읽는다.
+ * - 사람들의 이름 및 성별 데이터를 이진 변환 데이터로 로드한다.
+ * - RecordReaderDataSetIterator에서 사용할 수 있는 이진 문자열 반복기 생성
  */
 
 public class GenderRecordReader extends LineRecordReader
 {
-    // list to hold labels passed in constructor
+    // 생성자에 전달된 레이블을 보고나할 리스트
     private List<String> labels;
 
-    // Final list that contains actual binary data generated from person name, it also contains label (1 or 0) at the end
+    // 사람 이름으로 생성된 실제 이진 데이터를 포함하는 최종 리스트로, 끝에 레이블(1 또는 0)이 포함된다.
     private List<String> names = new ArrayList<String>();
 
-    // String to hold all possible alphabets from all person names in raw data
-    // This String is used to convert person name to binary string seperated by comma
+    // 원본 데이터의 모든 사람 이름에서 뽑은 가능한 모든 알파벳을 포함하는 문자열
+    // 이 문자열은 사람 이름을 쉼표로 구분된 이진 문자열로 변환하는데 사용된다.
     private String possibleCharacters = "";
 
-    // holds length of largest name out of all person names
+    // 모든 사람의 이름 중 가장 긴 이름의 길이를 저장
     public int maxLengthName = 0;
 
-    // holds total number of names including both male and female names.
-    // This variable is not used in PredictGenderTrain.java
+    // 남성 이름과 여성 이름을 모두 포함한 총 이름 수를 저장
+    // 이 변수는 PredictGenderTrain.java에서는 사용되지 않는다.
     private int totalRecords = 0;
 
-    // iterator for List "names" to be used in next() method
+    // next() 메서드에서 사용할 이름 리스트에 대한 반복자
     private Iterator<String> iter;
 
     /**
-     * Constructor to allow client application to pass List of possible Labels
-     * @param labels - List of String that client application pass all possible labels, in our case "M" and "F"
+     * 클라이언트 애플리케이션이 레이블 목록을 전달할 수 있도록 허용하는 생성자
+     * @param labels - 클라이언트 애플리케이션이 모든 레이블을 전달하는 문자열 목록 (예: "M"과 "F")
      */
     public GenderRecordReader(List<String> labels)
     {
@@ -64,8 +64,8 @@ public class GenderRecordReader extends LineRecordReader
     }
 
     /**
-     * returns total number of records in List "names"
-     * @return - totalRecords
+     * 이름 리스트의 레코드 개수를 반환
+     * @return - 레코드 개수
      */
     private int totalRecords()
     {
@@ -74,10 +74,10 @@ public class GenderRecordReader extends LineRecordReader
 
 
     /**
-     * This function does following steps
-     * - Looks for the files with the name (in specified folder) as specified in labels set in constructor
-     * - File must have person name and gender of the person (M or F),
-     *   e.g. Deepan,M
+     * 이 메서드는 다음 단계에 따라 동작한다.
+     * - 생성자에 설정된 레이블셋에서 유추한 이름(지정된 폴더)의 파일을 찾는다.
+     * - 파일에는 사람 이름과 성별(M 또는 F)가 있어야 한다.
+     *   예. Deepan,M
      *        Trupesh,M
      *        Vinay,M
      *        Ghanshyam,M
@@ -86,18 +86,17 @@ public class GenderRecordReader extends LineRecordReader
      *        Jignasha,F
      *        Chaku,F
      *
-     * - File for male and female names must be different, like M.csv, F.csv etc.
-     * - populates all names in temporary list
-     * - generate binary string for each alphabet for all person names
-     * - combine binary string for all alphabets for each name
-     * - find all unique alphabets to generate binary string mentioned in above step
-     * - take equal number of records from all files. To do that, finds minimum record from all files, and then takes
-     *   that number of records from all files to keep balance between data of different labels.
-     * - Note : this function uses stream() feature of Java 8, which makes processing faster. Standard method to process file takes more than 5-7 minutes.
-     *          using stream() takes approximately 800-900 ms only.
-     * - Final converted binary data is stored List<String> names variable
-     * - sets iterator from "names" list to be used in next() function
-     * @param split - user can pass directory containing .CSV file for that contains names of male or female
+     * - M.csv, F.csv 등과 같이 남성과 여성의 이름 파일은 서로 달라야 한다.
+     * - 모든 이름을 임시 리스트에 채운다.
+     * - 모든 사람 이름에 대해 각 알파벳에 대한 이진 문자열을 생선한다.
+     * - 각 이름의 모든 알파벳에 대한 이진 문자열을 결합한다.
+     * - 위 단계에서 언급한 이진 문자열을 생성하기 위해 모든 고유한 알파벳을 찾는다.
+     * - 모든 파일에서 동일한 수의 레코드를 가져온다. 이렇게 하려면 가장 적은 레코드 개수를 가진 파일을 찾은 다음 모든 파일에서 해당 레코드 수를 가져와
+     *   서로 다른 레이블의 데이터 간에 균형을 유지한다.
+     * - 첨고: 자바 8의 스트림 기능을 사용하면 처리 속도가 빨라진다. 파일을 처리하는 기본적인 방법은 5~7분 이상 걸린다. 스트림 사용 시 800~900밀리초가 걸린다.
+     * - 최종 변환 이진 데이터는 List<String> 타입의 names 변수에 저장된다.
+     * - next() 메서드에 사용할 이름 리스트에서 반복자를 설정한다.
+     * @param split - 사용자는 남성 또는 여성 이름이 포함된 CSV 파일을 포함하는 디렉토리를 전달할 수 있다.
      * @throws IOException
      * @throws InterruptedException
      */
@@ -204,8 +203,8 @@ public class GenderRecordReader extends LineRecordReader
 
 
     /**
-     * - takes onme record at a time from names list using iter iterator
-     * - stores it into Writable List and returns it
+     * - iter 반복자를 사용해 이름 리스트에서 한번에 하나의 레코드를 가져온다.
+     * - Writable 리스트에 저장하고 반환한다.
      *
      * @return
      */
@@ -258,15 +257,15 @@ public class GenderRecordReader extends LineRecordReader
     }
 
     /**
-     * This function gives binary string for full name string
-     * - It uses "PossibleCharacters" string to find the decimal equivalent to any alphabet from it
-     * - generate binary string for each alphabet
-     * - left pads binary string for each alphabet to make it of size 5
-     * - combine binary string for all alphabets of a name
-     * - Right pads complete binary string to make it of size that is the size of largest name to keep all name length of equal size
-     * - appends label value (1 or 0 for male or female respectively)
-     * @param name - person name to be converted to binary string
-     * @param gender - variable to decide value of label to be added to name's binary string at the end of the string
+     * 이 메서드는 전체 이름 문자열에 대한 이진 문자열을 제공한다.
+     * - "PossibleCharacters" 문자열을 사용해 문자열에서 알파벳과 동등한 10진수 값을 찾는다.
+     * - 각 알파벳에 대한 이진 문자열을 생성한다.
+     * - 왼쪽 패딩을 적용해 이진 문자열읠 길이를 5로 만든다.
+     * - 이름의 모든 알파벳에 대한 이진문자열을 결합한다.
+     * - 오른쪽 패딩으로 모든 이름 길이를 가장 긴 이름 길이와 동일하게 만들어 이진 문자열을 완성한다.
+     * - 레이블을 끝에 축자한다 (남성은 1, 여성은 0)
+     * @param name - 이진 문자열로 변환될 사람 이름
+     * @param gender - 이름의 이진 문자열 끝에 추가할 레이블 값을 결정하는 변수
      * @return
      */
     private String getBinaryString(String name, int gender)
@@ -277,7 +276,7 @@ public class GenderRecordReader extends LineRecordReader
             String fs = org.apache.commons.lang3.StringUtils.leftPad(Integer.toBinaryString(this.possibleCharacters.indexOf(name.charAt(j))),5,"0");
             binaryString = binaryString + fs;
         }
-        //binaryString = String.format("%-" + this.maxLengthName*5 + "s",binaryString).replace(' ','0'); // this takes more time than StringUtils, hence commented
+        //binaryString = String.format("%-" + this.maxLengthName*5 + "s",binaryString).replace(' ','0'); // 이 방법은 StringUtils보다 오래 걸리므로 주석 처리했다.
 
         binaryString  = org.apache.commons.lang3.StringUtils.rightPad(binaryString,this.maxLengthName*5,"0");
         binaryString = binaryString.replaceAll(".(?!$)", "$0,");

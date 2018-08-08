@@ -1,7 +1,7 @@
 package org.deeplearning4j.examples.feedforward.classification.detectgender;
 
 /**
- * Created by KITS on 9/14/2016.
+ * 9/14/2016에 KITS가 생성.
  */
 
 
@@ -16,13 +16,13 @@ import javax.swing.*;
 
 
 /**
- * "Linear" Data Classification Example
+ * "선형" 데이터 분류 예제
  *
- * Based on the data from Jason Baldridge:
+ * 제이슨 볼드리지의 데이터를 기반으로 함
  * https://github.com/jasonbaldridge/try-tf/tree/master/simdata
  *
- * @author Josh Patterson
- * @author Alex Black (added plots)
+ * @author 조시 패터슨
+ * @author 알렉스 블랙 (플롯 추가)
  *
  */
 public class PredictGenderTest implements Runnable {

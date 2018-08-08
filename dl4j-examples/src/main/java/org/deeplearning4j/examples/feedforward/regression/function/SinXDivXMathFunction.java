@@ -5,7 +5,7 @@ import org.nd4j.linalg.api.ops.impl.transforms.Sin;
 import org.nd4j.linalg.factory.Nd4j;
 
 /**
- * Calculate function value of sine of x divided by x.
+ * x의 사인 값을 x로 나누는 함수
  */
 public class SinXDivXMathFunction implements MathFunction {
 

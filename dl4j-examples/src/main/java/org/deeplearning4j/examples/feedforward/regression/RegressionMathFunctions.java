@@ -30,29 +30,28 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-/**Example: Train a network to reproduce certain mathematical functions, and plot the results.
- * Plotting of the network output occurs every 'plotFrequency' epochs. Thus, the plot shows the accuracy of the network
- * predictions as training progresses.
- * A number of mathematical functions are implemented here.
- * Note the use of the identity function on the network output layer, for regression
+/**예제: 특정 수학 함수를 재현할 수 있는 신경망을 훈련하고 결과를 표시한다.
+ * 신경망 출력은 'plotFrequency' 에포크마다 플로팅 된다. 따라서 플롯은 학습이 진행될수록 신경망 예측의 정확성을 보여준다.
+ * 여기서는 다양한 수학 함수를 구현한다.
+ * 회귀 분석을 위해 신경망 출력 계층에서 항등 함수를 사용한다.
  *
- * @author Alex Black
+ * @author 알렉스 블랙
  */
 public class RegressionMathFunctions {
 
-    //Random number generator seed, for reproducability
+    // 재현성을 위해 난수 생성기 시드를 고정
     public static final int seed = 12345;
-    //Number of iterations per minibatch
+    // 미니 배치당 반복 횟수
     public static final int iterations = 1;
-    //Number of epochs (full passes of the data)
+    // 에포크 횟수 (전체 데이터 처리)
     public static final int nEpochs = 2000;
-    //How frequently should we plot the network output?
+    // 신경망 출력을 얼마나 자주 플로팅해야하는가?
     public static final int plotFrequency = 500;
-    //Number of data points
+    // 데이터 좌표 개수
     public static final int nSamples = 1000;
-    //Batch size: i.e., each epoch has nSamples/batchSize parameter updates
+    // 배치 크기: 즉, 에포크는 nSample/batchSize번 매개변수 업데이트한다
     public static final int batchSize = 100;
-    //Network learning rate
+    // 신경망 학습률
     public static final double learningRate = 0.01;
     public static final Random rng = new Random(seed);
     public static final int numInputs = 1;
@@ -61,21 +60,21 @@ public class RegressionMathFunctions {
 
     public static void main(final String[] args){
 
-        //Switch these two options to do different functions with different networks
+        // 서로 다른 신경망에서 다양한 기능을 수행하려면 다음 두 옵션을 전환해라
         final MathFunction fn = new SinXDivXMathFunction();
         final MultiLayerConfiguration conf = getDeepDenseLayerNetworkConfiguration();
 
-        //Generate the training data
+        // 학습 데이터 생성
         final INDArray x = Nd4j.linspace(-10,10,nSamples).reshape(nSamples, 1);
         final DataSetIterator iterator = getTrainingData(x,fn,batchSize,rng);
 
-        //Create the network
+        // 신경망 생성
         final MultiLayerNetwork net = new MultiLayerNetwork(conf);
         net.init();
         net.setListeners(new ScoreIterationListener(1));
 
 
-        //Train the network on the full data set, and evaluate in periodically
+        // 신경망을 전체 데이터셋에서 학습하고 주기적으로 평가
         final INDArray[] networkPredictions = new INDArray[nEpochs/ plotFrequency];
         for( int i=0; i<nEpochs; i++ ){
             iterator.reset();
@@ -83,11 +82,11 @@ public class RegressionMathFunctions {
             if((i+1) % plotFrequency == 0) networkPredictions[i/ plotFrequency] = net.output(x, false);
         }
 
-        //Plot the target data and the network predictions
+        // 대상 데이터 및 신경망 예측을 플롯
         plot(fn,x,fn.getFunctionValues(x),networkPredictions);
     }
 
-    /** Returns the network configuration, 2 hidden DenseLayers of size 50.
+    /** 노드 50개를 가진 2개의 은닉 계층으로 구성된 신경망을 반환
      */
     private static MultiLayerConfiguration getDeepDenseLayerNetworkConfiguration() {
         final int numHiddenNodes = 50;
@@ -109,11 +108,11 @@ public class RegressionMathFunctions {
                 .pretrain(false).backprop(true).build();
     }
 
-    /** Create a DataSetIterator for training
-     * @param x X values
-     * @param function Function to evaluate
-     * @param batchSize Batch size (number of examples for every call of DataSetIterator.next())
-     * @param rng Random number generator (for repeatability)
+    /** 학습용 DataSetIterator 생성
+     * @param x X 값
+     * @param function 평가할 함수
+     * @param batchSize 배치 크기(DataSetIterator.next() 호출마다 불려지는 입력 데이터 개수)
+     * @param rng 난수 생성기 (재현성을 위해 외부에서 난수 생성기 전달)
      */
     private static DataSetIterator getTrainingData(final INDArray x, final MathFunction function, final int batchSize, final Random rng) {
         final INDArray y = function.getFunctionValues(x);
@@ -124,7 +123,7 @@ public class RegressionMathFunctions {
         return new ListDataSetIterator(list,batchSize);
     }
 
-    //Plot the data
+    // 데이터를 플롯
     private static void plot(final MathFunction function, final INDArray x, final INDArray y, final INDArray... predicted) {
         final XYSeriesCollection dataSet = new XYSeriesCollection();
         addSeries(dataSet,x,y,"True Function (Labels)");
@@ -134,14 +133,14 @@ public class RegressionMathFunctions {
         }
 
         final JFreeChart chart = ChartFactory.createXYLineChart(
-                "Regression Example - " + function.getName(),      // chart title
-                "X",                        // x axis label
-                function.getName() + "(X)", // y axis label
-                dataSet,                    // data
+                "Regression Example - " + function.getName(),      // 차트 제목
+                "X",                        // x 축 레이블
+                function.getName() + "(X)", // y 축 레이블
+                dataSet,                    // 데이터
                 PlotOrientation.VERTICAL,
-                true,                       // include legend
-                true,                       // tooltips
-                false                       // urls
+                true,                       // 범례 추가
+                true,                       // 툴팁 추가
+                false                       // URL 제거
         );
 
         final ChartPanel panel = new ChartPanel(chart);

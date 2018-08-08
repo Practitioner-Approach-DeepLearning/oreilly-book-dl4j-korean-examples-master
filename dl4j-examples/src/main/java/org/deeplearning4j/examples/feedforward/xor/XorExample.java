@@ -20,146 +20,119 @@ import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 /**
- * This basic example shows how to manually create a DataSet and train it to an
- * basic Network.
+ * 이 기본 에제는 데이터셋을 수동으로 생성하고 기본 신경망을 학습시킨다.
  * <p>
- * The network consists in 2 input-neurons, 1 hidden-layer with 4
- * hidden-neurons, and 2 output-neurons.
+ * 신경망은 입력 뉴런 2개, 은닉 뉴런 4개가 있는 은닉 계층 1개, 출력 뉴런 2개로 구성된다.
  * <p>
- * I choose 2 output neurons, (the first fires for false, the second fires for
- * true) because the Evaluation class needs one neuron per classification.
+ * 여기서는 출력 뉴런을 2개로 구성했다. Evaluation 클래스는 분류당 하나의 뉴런이 필요하기 때문이다.
  *
- * @author Peter Großmann
+ * @author 피터 그로즈만
  */
 public class XorExample {
     public static void main(String[] args) {
 
-        // list off input values, 4 training samples with data for 2
-        // input-neurons each
+        // 입력 값 나열, 입력 뉴런 각각 2개 씩 입력 받아 학습 샘플 총 4개
         INDArray input = Nd4j.zeros(4, 2);
 
-        // correspondending list with expected output values, 4 training samples
-        // with data for 2 output-neurons each
+        // 예상 출력 값이 포함된 출력 각각 2개 씩 학습 샘플 총 4개
         INDArray labels = Nd4j.zeros(4, 2);
 
-        // create first dataset
-        // when first input=0 and second input=0
+        // 첫번째 데이터셋 생성
+        // 첫번재 입력이 0, 두번째 입력도 0
         input.putScalar(new int[]{0, 0}, 0);
         input.putScalar(new int[]{0, 1}, 0);
-        // then the first output fires for false, and the second is 0 (see class
-        // comment)
+        // 그러면 첫번째 출력은 거짓이며 두번째 출력은 0이다 (클래스 주석 참조)
         labels.putScalar(new int[]{0, 0}, 1);
         labels.putScalar(new int[]{0, 1}, 0);
 
-        // when first input=1 and second input=0
+        // 첫번재 입력이 1 두번째 입력도 0
         input.putScalar(new int[]{1, 0}, 1);
         input.putScalar(new int[]{1, 1}, 0);
-        // then xor is true, therefore the second output neuron fires
+        // 그러면 xor은 참이므로 두번째 출력 뉴런이 1이 된다
         labels.putScalar(new int[]{1, 0}, 0);
         labels.putScalar(new int[]{1, 1}, 1);
 
-        // same as above
+        // 위와 동일
         input.putScalar(new int[]{2, 0}, 0);
         input.putScalar(new int[]{2, 1}, 1);
         labels.putScalar(new int[]{2, 0}, 0);
         labels.putScalar(new int[]{2, 1}, 1);
 
-        // when both inputs fire, xor is false again - the first output should
-        // fire
+        // 두 입력이 모두 1이면 xor은 다시 거짓이다. 첫번째 출력이 1이어야 한다.
         input.putScalar(new int[]{3, 0}, 1);
         input.putScalar(new int[]{3, 1}, 1);
         labels.putScalar(new int[]{3, 0}, 1);
         labels.putScalar(new int[]{3, 1}, 0);
 
-        // create dataset object
+        // 데이터셋 객체 생성
         DataSet ds = new DataSet(input, labels);
 
-        // Set up network configuration
+        // 신경망 구성 설정
         NeuralNetConfiguration.Builder builder = new NeuralNetConfiguration.Builder();
-        // how often should the training set be run, we need something above
-        // 1000, or a higher learning-rate - found this values just by trial and
-        // error
+        // 1,000개 이상 학습하거나 학습률을 높이기 위해 얼마나 반복해야 하는가? - 시행 착오를 통해 현재 값을 도출함
         builder.iterations(10000);
-        // learning rate
+        // 학습률
         builder.learningRate(0.1);
-        // fixed seed for the random generator, so any run of this program
-        // brings the same results - may not work if you do something like
-        // ds.shuffle()
+        // 난수 생성기의 시드 고정. 이 애플리케이션은 실행할 때마다 동일한 결과가 나온다. ds.shuffle()과 같은 작업을 별도로 수행하면 결과가 달라질 수 있다.
         builder.seed(123);
-        // not applicable, this network is to small - but for bigger networks it
-        // can help that the network will not only recite the training data
+        // 이 신경망은 소규모 신경망이므로 사용하지 않음. 더 큰 신경망에서 사용할 경우 신경망이 학습 데이터에서 암기(특징을 습득)하는데 도움이 될 수 있다.
         builder.useDropConnect(false);
-        // a standard algorithm for moving on the error-plane, this one works
-        // best for me, LINE_GRADIENT_DESCENT or CONJUGATE_GRADIENT can do the
-        // job, too - it's an empirical value which one matches best to
-        // your problem
+        // 오차 평면에서 이동하기 위한 표준 알고리즘이다. 이 알고리즘이 가장 잘 동작했다. LINE_GRADIENT_DESCENT나 CONJUGATE_GRADIENT도
+        // 좋은 결과를 보여준다.
         builder.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT);
-        // init the bias with 0 - empirical value, too
+        // 0으로 편향 초기화 - 여러번 테스트해 결정
         builder.biasInit(0);
-        // from "http://deeplearning4j.org/architecture": The networks can
-        // process the input more quickly and more accurately by ingesting
-        // minibatches 5-10 elements at a time in parallel.
-        // this example runs better without, because the dataset is smaller than
-        // the mini batch size
+        // ""http://deeplearning4j.org/architecture" 발췌: 신경망은 한번에 5~10개의 요소를 병렬로 수집해 입력을 보다 빠르고 정확하게 처리할 수 있다.
+        // 이 예제는 데이터셋이 미니 배치 크기보다도 작기 때문에 미니 배치가 필요없다.
         builder.miniBatch(false);
 
-        // create a multilayer network with 2 layers (including the output
-        // layer, excluding the input payer)
+        // 계층 2개로 구성된 다층 신경망 생성(입력 계층을 제외하고 출력 계층을 포함)
         ListBuilder listBuilder = builder.list();
 
         DenseLayer.Builder hiddenLayerBuilder = new DenseLayer.Builder();
-        // two input connections - simultaneously defines the number of input
-        // neurons, because it's the first non-input-layer
+        // 입력 두개 연결 - 동시에 입력 뉴런의 수를 정의한다. 왜나하면 첫번째 비입력 계층이기 때문이다.
         hiddenLayerBuilder.nIn(2);
-        // number of outgooing connections, nOut simultaneously defines the
-        // number of neurons in this layer
+        // 출력 연결 개수, nOut은 동시에 이 계층의 뉴런 개수를 의미한다.
         hiddenLayerBuilder.nOut(4);
-        // put the output through the sigmoid function, to cap the output
-        // valuebetween 0 and 1
+        // 출력을 시그모이드 함수를 통과시켜 0과 1사이 범위로 출력 값을 만든다.
         hiddenLayerBuilder.activation(Activation.SIGMOID);
-        // random initialize weights with values between 0 and 1
+        // 0과 1 사이의 임의의 값을 초기화 가중치로 설정한다.
         hiddenLayerBuilder.weightInit(WeightInit.DISTRIBUTION);
         hiddenLayerBuilder.dist(new UniformDistribution(0, 1));
 
-        // build and set as layer 0
+        // 계층 0으로 설정 및 구축
         listBuilder.layer(0, hiddenLayerBuilder.build());
 
-        // MCXENT or NEGATIVELOGLIKELIHOOD (both are mathematically equivalent) work ok for this example - this
-        // function calculates the error-value (aka 'cost' or 'loss function value'), and quantifies the goodness
-        // or badness of a prediction, in a differentiable way
-        // For classification (with mutually exclusive classes, like here), use multiclass cross entropy, in conjunction
-        // with softmax activation function
+        // MCXENT 또는 NEGATIVELOGLIKELIHOOD(수학적으로 동일함) - 이 함수는 오차-값 ('비용' 또는 '손실 함수 값')을 계산한다.
+        // (이 예제처럼 상호 배타적인 클래스로) 분류하는 경우, 소프트맥스 활성화 함수와 함께 멀티 클래스 교차 엔트로피를 사용하라.
         Builder outputLayerBuilder = new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD);
-        // must be the same amout as neurons in the layer before
+        // 이전 계층의 뉴런과 동일한 개수여야 한다.
         outputLayerBuilder.nIn(4);
-        // two neurons in this layer
+        // 이 계층에 있는 뉴런 2개
         outputLayerBuilder.nOut(2);
         outputLayerBuilder.activation(Activation.SOFTMAX);
         outputLayerBuilder.weightInit(WeightInit.DISTRIBUTION);
         outputLayerBuilder.dist(new UniformDistribution(0, 1));
         listBuilder.layer(1, outputLayerBuilder.build());
 
-        // no pretrain phase for this network
+        // 이 신경망은 사전 학습 단계 없음
         listBuilder.pretrain(false);
 
-        // seems to be mandatory
-        // according to agibsonccc: You typically only use that with
-        // pretrain(true) when you want to do pretrain/finetune without changing
-        // the previous layers finetuned weights that's for autoencoders and
-        // rbms
+        // 필수인 것 같다
+        // agibsonccc 말을 인용하면: 일반적으로 오토인코더나 rbms를 사용할 때 이전 계층의 잘 튜닝된 가중치를 변경하지 않고 사전 학습/파인 튜닝을 사용하고자할 때만
+        // pretrain(true)로 설정해야 한다.
         listBuilder.backprop(true);
 
-        // build and init the network, will check if everything is configured
-        // correct
+        // 신경망을 구축하고 초기화한 다음, 모두 올바르게 구성되어 있는지 확인
         MultiLayerConfiguration conf = listBuilder.build();
         MultiLayerNetwork net = new MultiLayerNetwork(conf);
         net.init();
 
-        // add an listener which outputs the error every 100 parameter updates
+        // 매개변수 업데이트를 100번 할 때마다 오차를 출력하는 리스너 추가
         net.setListeners(new ScoreIterationListener(100));
 
-        // C&P from GravesLSTMCharModellingExample
-        // Print the number of parameters in the network (and for each layer)
+        // GravesLSTMCharModellingExample의 C&P
+        // 신경망(및 각 계층)의 매개변수개수를 출력한다.
         Layer[] layers = net.getLayers();
         int totalNumParams = 0;
         for (int i = 0; i < layers.length; i++) {
@@ -169,15 +142,14 @@ public class XorExample {
         }
         System.out.println("Total number of network parameters: " + totalNumParams);
 
-        // here the actual learning takes place
+        // 여기서 실제로 학습이 이루어진다.
         net.fit(ds);
 
-        // create output for every training sample
+        // 모든 학습 샘플을 위한 출력 생성
         INDArray output = net.output(ds.getFeatureMatrix());
         System.out.println(output);
 
-        // let Evaluation prints stats how often the right output had the
-        // highest value
+        // Evaluation에서  올바른(가장 높은 값을 갖는) 출력의 빈도에 관한 통계를 출력한다.
         Evaluation eval = new Evaluation(2);
         eval.eval(ds.getLabels(), output);
         System.out.println(eval.stats());

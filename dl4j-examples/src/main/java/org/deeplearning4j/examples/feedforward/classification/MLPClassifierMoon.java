@@ -24,13 +24,13 @@ import org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction;
 import java.io.File;
 
 /**
- * "Moon" Data Classification Example
+ * "달" 데이터 분류 예제
  *
- * Based on the data from Jason Baldridge:
+ * 제이슨 볼드리지의 데이터를 기반으로 함
  * 	https://github.com/jasonbaldridge/try-tf/tree/master/simdata
  *
- * @author Josh Patterson
- * @author Alex Black (added plots)
+ * @author 조시 패터슨
+ * @author 알렉스 블랙 (플롯 추가)
  *
  */
 public class MLPClassifierMoon {
@@ -45,12 +45,12 @@ public class MLPClassifierMoon {
         int numOutputs = 2;
         int numHiddenNodes = 20;
 
-        //Load the training data:
+        // 학습 데이터 블러오기
         RecordReader rr = new CSVRecordReader();
         rr.initialize(new FileSplit(new File("dl4j-examples/src/main/resources/classification/moon_data_train.csv")));
         DataSetIterator trainIter = new RecordReaderDataSetIterator(rr,batchSize,0,2);
 
-        //Load the test/evaluation data:
+        // 테스트/평가 데이터 불러오기
         RecordReader rrTest = new CSVRecordReader();
         rrTest.initialize(new FileSplit(new File("dl4j-examples/src/main/resources/classification/moon_data_eval.csv")));
         DataSetIterator testIter = new RecordReaderDataSetIterator(rrTest,batchSize,0,2);
@@ -76,7 +76,7 @@ public class MLPClassifierMoon {
 
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
         model.init();
-        model.setListeners(new ScoreIterationListener(100));    //Print score every 100 parameter updates
+        model.setListeners(new ScoreIterationListener(100));    // 파라미터 업데이트를 100번할 때마다 점수 출력
 
         for ( int n = 0; n < nEpochs; n++) {
             model.fit( trainIter );
@@ -93,20 +93,20 @@ public class MLPClassifierMoon {
             eval.eval(labels, predicted);
         }
 
-        //Print the evaluation statistics
+        // 평가 통계 출력
         System.out.println(eval.stats());
 
 
         //------------------------------------------------------------------------------------
-        //Training is complete. Code that follows is for plotting the data & predictions only
+        // 학습 완료. 아래 코드는 데이터 플로팅 및 예측 관련된 부분이다.
 
-        //Plot the data
+        // 데이터 플로팅
         double xMin = -1.5;
         double xMax = 2.5;
         double yMin = -1;
         double yMax = 1.5;
 
-        //Let's evaluate the predictions at every point in the x/y input space, and plot this in the background
+        // x/y 입력 공간의 모든 점에서 예측 값을 평가한다. 그리고 백그라운드에서 이를 플로팅한다.
         int nPointsPerAxis = 100;
         double[][] evalPoints = new double[nPointsPerAxis*nPointsPerAxis][2];
         int count = 0;
@@ -125,7 +125,7 @@ public class MLPClassifierMoon {
         INDArray allXYPoints = Nd4j.create(evalPoints);
         INDArray predictionsAtXYPoints = model.output(allXYPoints);
 
-        //Get all of the training data in a single array, and plot it:
+        // 모든 학습 데이터를 단일 배열로 가져와서 플로팅한다.
         rr.initialize(new FileSplit(new File("dl4j-examples/src/main/resources/classification/moon_data_train.csv")));
         rr.reset();
         int nTrainPoints = 2000;
@@ -134,7 +134,7 @@ public class MLPClassifierMoon {
         PlotUtil.plotTrainingData(ds.getFeatures(), ds.getLabels(), allXYPoints, predictionsAtXYPoints, nPointsPerAxis);
 
 
-        //Get test data, run the test data through the network to generate predictions, and plot those predictions:
+        // 테스트 데이터를 가져와서, 신경망을 실행해 예측을 생성하고, 예측을 화면에 표시한다.
         rrTest.initialize(new FileSplit(new File("dl4j-examples/src/main/resources/classification/moon_data_eval.csv")));
         rrTest.reset();
         int nTestPoints = 1000;
