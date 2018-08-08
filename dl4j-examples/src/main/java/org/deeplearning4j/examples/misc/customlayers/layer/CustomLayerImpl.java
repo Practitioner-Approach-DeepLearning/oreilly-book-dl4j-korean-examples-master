@@ -12,11 +12,12 @@ import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 
 /**
- * Layer (implementation) class for the custom layer example
+ * 커스텀 계층 예제에 대한 계층 구현 클래스
  *
  * @author Alex Black
  */
-public class CustomLayerImpl extends BaseLayer<CustomLayer> { //Generic parameter here: the configuration class type
+
+public class CustomLayerImpl extends BaseLayer<CustomLayer> { //일반적인 매개 변수로 설정 클래스를 사용한다.
 
     public CustomLayerImpl(NeuralNetConfiguration conf) {
         super(conf);
@@ -25,13 +26,12 @@ public class CustomLayerImpl extends BaseLayer<CustomLayer> { //Generic paramete
 
     @Override
     public INDArray preOutput(INDArray x, boolean training) {
-        /*
-        The preOut method(s) calculate the activations (forward pass), before the activation function is applied.
-
+       /*
+         활성화 함수가 적용되지 전에 이 메소드는 활성화 값을 계산한다 (전방향 전달)
         Because we aren't doing anything different to a standard dense layer, we can use the existing implementation
         for this. Other network types (RNNs, CNNs etc) will require you to implement this method.
-
-        For custom layers, you may also have to implement methods such as calcL1, calcL2, numParams, etc.
+        Dense 계층과 다른 내용을 수행하지 않기 때문에 기존 것을 사용해도 된다. 다른 신경망 유형 ( RNN, CNN  등) 에서는 이 방법을 구현해야한다.
+        사용자정의 계층의 경우 calcL1, calcL2, numParams 등과 같은 메서드를 구현해야 할 수도 있다.
          */
 
         return super.preOutput(x, training);
@@ -40,11 +40,10 @@ public class CustomLayerImpl extends BaseLayer<CustomLayer> { //Generic paramete
 
     @Override
     public INDArray activate(boolean training) {
-        /*
-        The activate method is used for doing forward pass. Note that it relies on the pre-output method;
-        essentially we are just applying the activation function (or, functions in this example).
-        In this particular (contrived) example, we have TWO activation functions - one for the first half of the outputs
-        and another for the second half.
+         /*
+            이 매소드는 전방향전달을 수행한다. preOutput 메소드에 의존한다는 점에 주의하자.
+            본질적으로 활성화 함수를 적용하기만 하면 된다.
+            이 특별한 예제에서 두 개의 활성화 함수가 있다. 하나는 출력의 첫 번째 절반에 대한 것이고 다른 하나는 두 번째 절반에 대한 것이다.
          */
 
         INDArray output = preOutput(training);
@@ -56,7 +55,7 @@ public class CustomLayerImpl extends BaseLayer<CustomLayer> { //Generic paramete
         IActivation activation1 = conf.getLayer().getActivationFn();
         IActivation activation2 = ((CustomLayer) conf.getLayer()).getSecondActivationFunction();
 
-        //IActivation function instances modify the activation functions in-place
+        // IActivation 함수 인스턴스는 활성화 함수를 현재 위치에서 수정한다.
         activation1.getActivation(firstHalf, training);
         activation2.getActivation(secondHalf, training);
 
@@ -72,25 +71,20 @@ public class CustomLayerImpl extends BaseLayer<CustomLayer> { //Generic paramete
     @Override
     public Pair<Gradient, INDArray> backpropGradient(INDArray epsilon) {
         /*
-        The baockprop gradient method here is very similar to the BaseLayer backprop gradient implementation
-        The only major difference is the two activation functions we have added in this example.
+        이 backpropGradient 함수는 BaseLayer의 backprop gradient 구현과 비슷하다.
+        주요 차이점은 두개의 활성화 함수가 이 예제에 추가되었다는 것이다.
+        엡실론은 dL / da, 즉 활성화에 대한 손실 함수의 미분이다.
+        활성화 배열 (즉, preOut 및 활성화 메소드의 출력)과 완전히 동일한 모양을 가진다.
+        이것은 인공 신경망 문서들에서 일반적으로 사용되는 델타가 아니다.
+        델타는 활성화 함수 미분을 가진 원소 단위의 곱을 수행함으로써 엡실론 ( "ε"은 dl4j의 표기법)으로부터 얻어진다.
 
-        Note that epsilon is dL/da - i.e., the derivative of the loss function with respect to the activations.
-        It has the exact same shape as the activation arrays (i.e., the output of preOut and activate methods)
-        This is NOT the 'delta' commonly used in the neural network literature; the delta is obtained from the
-        epsilon ("epsilon" is dl4j's notation) by doing an element-wise product with the activation function derivative.
-
-        Note the following:
-        1. Is it very important that you use the gradientViews arrays for the results.
-           Note the gradientViews.get(...) and the in-place operations here.
-           This is because DL4J uses a single large array for the gradients for efficiency. Subsets of this array (views)
-           are distributed to each of the layers for efficient backprop and memory management.
-        2. The method returns two things, as a Pair:
-           (a) a Gradient object (essentially a Map<String,INDArray> of the gradients for each parameter (again, these
-               are views of the full network gradient array)
-           (b) an INDArray. This INDArray is the 'epsilon' to pass to the layer below. i.e., it is the gradient with
-               respect to the input to this layer
-
+        다음 사항에 주의하자:
+        1. 결과를 위해 gradientViews를 사용한다는 점을 명심하자. gradientViews.get(...) 및 내부 편집 작업을 여기서 한다는 것에 유의하자.
+            이는 DL4J가 효율을 위해 기울기에 대해 하나의 큰 배열을 사용하기 때문이다.
+            이 배열(뷰)의 서브 셋은 효율적인 백 드롭 및 메모리 관리를 위해 각 계층에 분산된다.
+        2. 이 메소드는 두개 값을 한쌍으로 리턴한다.
+            (a) 기울기 객체 (각각 파라미터의 기울기에 대한 Map<Strong, INDArray> (다시 말하지만, 이것들은 전체 신경망 기울기 배열의 뷰 이다))
+            (b) INDArray. 이 INDArray는 이후 계층으로 전달되는 엡실론 값이다. 즉,이 층의 입력에 대한 기울기이다.
         */
 
         INDArray activationDerivative = preOutput(true);
@@ -106,11 +100,12 @@ public class CustomLayerImpl extends BaseLayer<CustomLayer> { //Generic paramete
         IActivation activation2 = ((CustomLayer) conf.getLayer()).getSecondActivationFunction();
 
         //IActivation backprop method modifies the 'firstHalf' and 'secondHalf' arrays in-place, to contain dL/dz
+        //IActivation backprop 메서드는 firstHalf, secondHalf 배열에 dL / dz를 포함하도록 내부 수정한다.
         activation1.backprop(firstHalf, epsilonFirstHalf);
         activation2.backprop(secondHalf, epsilonSecondHalf);
 
-        //The remaining code for this method: just copy & pasted from BaseLayer.backpropGradient
-//        INDArray delta = epsilon.muli(activationDerivative);
+        //이 메소드의 나머지 코드는 BaseLayer.backpropGradient에서 복사하여 붙여 넣기 한 것이다.
+        // INDArray delta = epsilon.muli(activationDerivative);
         if (maskArray != null) {
             activationDerivative.muliColumnVector(maskArray);
         }
@@ -120,7 +115,7 @@ public class CustomLayerImpl extends BaseLayer<CustomLayer> { //Generic paramete
         INDArray weightGrad = gradientViews.get(DefaultParamInitializer.WEIGHT_KEY);    //f order
         Nd4j.gemm(input, activationDerivative, weightGrad, true, false, 1.0, 0.0);
         INDArray biasGrad = gradientViews.get(DefaultParamInitializer.BIAS_KEY);
-        biasGrad.assign(activationDerivative.sum(0));  //TODO: do this without the assign
+        biasGrad.assign(activationDerivative.sum(0));  //TODO: 할당 없이 수행하도록 하기
 
         ret.gradientForVariable().put(DefaultParamInitializer.WEIGHT_KEY, weightGrad);
         ret.gradientForVariable().put(DefaultParamInitializer.BIAS_KEY, biasGrad);

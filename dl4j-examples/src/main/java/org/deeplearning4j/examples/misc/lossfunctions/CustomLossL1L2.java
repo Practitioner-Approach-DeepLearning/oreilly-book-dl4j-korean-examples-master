@@ -24,32 +24,31 @@ import java.util.*;
 @EqualsAndHashCode
 public class CustomLossL1L2 implements ILossFunction {
 
-    /* This example illustrates how to implements a custom loss function that can then be applied to training your neural net
-       All loss functions have to implement the ILossFunction interface
-       The loss function implemented here is:
+    /* 이 예제는 신경망을 훈련하는데 적용할 수 있는 맞춤형 손실 함수를 구현하는 방법에 대해 알려준다.
+       모든 손실함수는 ILossFunction 인터페이스를 구현해야 한다.
+       손실함수 구현방법은 아래와 같다.
        L = (y - y_hat)^2 +  |y - y_hat|
-        y is the true label, y_hat is the predicted output
+        y는  true 라벨, y_hat은 추측 결과이다.
      */
 
     private static Logger logger = LoggerFactory.getLogger(CustomLossL1L2.class);
 
     /*
-    Needs modification depending on your loss function
-        scoreArray calculates the loss for a single data point or in other words a batch size of one
-        It returns an array the shape and size of the output of the neural net.
-        Each element in the array is the loss function applied to the prediction and it's true value
-        scoreArray takes in:
-        true labels - labels
-        the input to the final/output layer of the neural network - preOutput,
-        the activation function on the final layer of the neural network - activationFn
-        the mask - (if there is a) mask associated with the label
+    손실 함수에 따라 수정이 필요하다.
+        scoreArray는 단일 데이터 요소의 손실을 계산한다. 즉, 일괄 처리 크기는 1이다. 신경망 출력의 모양과 크기를 배열로 반환한다.
+        배열의 각 요소는 예측에 적용된 손실함수이며 true 값이다.
+        scoreArray가 받아들이는 값.
+        true 라벨 - labels
+        인공 신경망의 최종 출력에 들어가는 입력 - preOutput,
+        인공 신경망의 최종 출력에 사용되는 활성 함수 - activationFn
+        마스크 - 라벨이 붙은 마스크 (있는 경우)
      */
     private INDArray scoreArray(INDArray labels, INDArray preOutput, IActivation activationFn, INDArray mask) {
         INDArray scoreArr;
-        // This is the output of the neural network, the y_hat in the notation above
-        //To obtain y_hat: pre-output is transformed by the activation function to give the output of the neural network
+        // 인공 신경망의 출력이고 위에서 표기한 y_hat이다.
+        // y_hat을 얻을 수 있는 방법 : preOutput은 활성화 함수에 의해 변환되어 신경망의 출력을 제공한다.
         INDArray output = activationFn.getActivation(preOutput.dup(), true);
-        //The score is calculated as the sum of (y-y_hat)^2 + |y - y_hat|
+        // 스코어는 (y-y_hat)^2 + |y - y_hat| 의 합계이다.
         INDArray yMinusyHat = Transforms.abs(labels.sub(output));
         scoreArr = yMinusyHat.mul(yMinusyHat);
         scoreArr.addi(yMinusyHat);
@@ -60,10 +59,11 @@ public class CustomLossL1L2 implements ILossFunction {
     }
 
     /*
-    Remains the same for all loss functions
-    Compute Score computes the average loss function across many datapoints.
-    The loss for a single datapoint is summed over all output features.
+    모든 손실함수에 대해 동일하게 유지된다.
+    Compute Score는 많은 데이터 포인트에서 평균 손실 함수를 계산한다.
+    단일 데이터 포인트의 손실은 모든 출력 피쳐에 대해 합산된다.
      */
+
     @Override
     public double computeScore(INDArray labels, INDArray preOutput, IActivation activationFn, INDArray mask, boolean average) {
         INDArray scoreArr = scoreArray(labels, preOutput, activationFn, mask);
@@ -78,11 +78,12 @@ public class CustomLossL1L2 implements ILossFunction {
     }
 
     /*
-    Remains the same for all loss functions
-    Compute Score computes the loss function for many datapoints.
-    The loss for a single datapoint is the loss summed over all output features.
-    Returns an array that is #of samples x size of the output feature
+     모든 손실 기능에 대해 동일하게 유지된다.
+     Compute Score는 많은 데이터 포인트에 대한 손실 함수를 계산한다.
+     단일 데이터 포인트의 손실은 모든 출력 피쳐에 대해 합계 된 손실이다.
+     출력 피쳐의 샘플 x 크기 x 인 배열을 반환단다.
      */
+
     @Override
     public INDArray computeScoreArray(INDArray labels, INDArray preOutput, IActivation activationFn, INDArray mask) {
         INDArray scoreArr = scoreArray(labels, preOutput, activationFn, mask);
@@ -90,14 +91,14 @@ public class CustomLossL1L2 implements ILossFunction {
     }
 
     /*
-    Needs modification depending on your loss function
-        Compute the gradient wrt to the preout (which is the input to the final layer of the neural net)
-        Use the chain rule
-        In this case L = (y - yhat)^2 + |y - yhat|
-        dL/dyhat = -2*(y-yhat) - sign(y-yhat), sign of y - yhat = +1 if y-yhat>= 0 else -1
+        손실 함수에 따라 수정이 필요하다.
+        기울기 wrt를 프리 아웃으로 계산한다. (신경망의 최종 계층에 대한 입력)
+        연속적인 규칙 적용
+        이 경우  L = (y - yhat)^2 + |y - yhat|, dL/dyhat = -2*(y-yhat) - sign(y-yhat), sign of y - yhat = +1 if y-yhat>= 0 else -1
         dyhat/dpreout = d(Activation(preout))/dpreout = Activation'(preout)
         dL/dpreout = dL/dyhat * dyhat/dpreout
     */
+
     @Override
     public INDArray computeGradient(INDArray labels, INDArray preOutput, IActivation activationFn, INDArray mask) {
         INDArray output = activationFn.getActivation(preOutput.dup(), true);
@@ -106,12 +107,17 @@ public class CustomLossL1L2 implements ILossFunction {
         //The following is the most readable for the sake of this example, not necessarily the fastest
         //Refer to the Implementation of LossL1 and LossL2 for more efficient ways
         */
+        /*
+        // 참고 : nd4j에서 이와 동일한 작업 집합을 수행하는 여러 가지 방법이 있다.
+        // 다음은이 예제에서 가장 읽기 쉽지만 반드시 가장 빠를 필요는 없다.
+        //보다 효율적인 방법은 LossL1 및 LossL2의 구현을 참조하자.
+        */
         INDArray yMinusyHat = labels.sub(output);
-        INDArray dldyhat = yMinusyHat.mul(-2).sub(Transforms.sign(yMinusyHat)); //d(L)/d(yhat) -> this is the line that will change with your loss function
+        INDArray dldyhat = yMinusyHat.mul(-2).sub(Transforms.sign(yMinusyHat)); //d(L)/d(yhat) -> 이것은 손실함수로 바뀔 것이다.
 
-        //Everything below remains the same
+        //아래 모든 내용을 동일하게 유지하자.
         INDArray dLdPreOut = activationFn.backprop(preOutput.dup(), dldyhat).getFirst();
-        //multiply with masks, always
+        // 항상 마스크값을 곱하자
         if (mask != null) {
             dLdPreOut.muliColumnVector(mask);
         }
@@ -119,7 +125,7 @@ public class CustomLossL1L2 implements ILossFunction {
         return dLdPreOut;
     }
 
-    //remains the same for a custom loss function
+    // 커스텀 손실 함수에 대해 동일하게 유지하자.
     @Override
     public Pair<Double, INDArray> computeGradientAndScore(INDArray labels, INDArray preOutput, IActivation activationFn, INDArray mask, boolean average) {
         return new Pair<>(
