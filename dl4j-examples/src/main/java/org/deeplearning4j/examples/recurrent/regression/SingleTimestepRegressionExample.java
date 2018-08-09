@@ -37,12 +37,11 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.io.File;
 
-
 /**
- * This example was inspired by Jason Brownlee's regression examples for Keras, found here:
+ * 이 예제는 Jason Brownlee가 작성한 카라스(karas)를 활용하여 회귀분석을 참고했다. 아래 내용으로 확인이 가능하다.
  * http://machinelearningmastery.com/time-series-prediction-lstm-recurrent-neural-networks-python-keras/
  *
- * It demonstrates single time step regression using LSTM
+ * LSTM을 사용한 단일 시간 단계 회귀를 보여준다.
  */
 
 public class SingleTimestepRegressionExample {
@@ -54,30 +53,30 @@ public class SingleTimestepRegressionExample {
 
         int miniBatchSize = 32;
 
-        // ----- Load the training data -----
+        // ----- 학습데이터 호출 -----
         SequenceRecordReader trainReader = new CSVSequenceRecordReader(0, ";");
         trainReader.initialize(new NumberedFileInputSplit(baseDir.getAbsolutePath() + "/passengers_train_%d.csv", 0, 0));
 
-        //For regression, numPossibleLabels is not used. Setting it to -1 here
+        //회귀 분석의 경우 numPossibleLabels가 사용되지 않습니다. -1로 설정하자.
         DataSetIterator trainIter = new SequenceRecordReaderDataSetIterator(trainReader, miniBatchSize, -1, 1, true);
 
         SequenceRecordReader testReader = new CSVSequenceRecordReader(0, ";");
         testReader.initialize(new NumberedFileInputSplit(baseDir.getAbsolutePath() + "/passengers_test_%d.csv", 0, 0));
         DataSetIterator testIter = new SequenceRecordReaderDataSetIterator(testReader, miniBatchSize, -1, 1, true);
 
-        //Create data set from iterator here since we only have a single data set
+        //단일 데이터셋만 가지고 있으므로 이터레이터에서 데이터 세트를 만든다.
         DataSet trainData = trainIter.next();
         DataSet testData = testIter.next();
 
-        //Normalize data, including labels (fitLabel=true)
+        //레이블을 포함한 데이터 표준화 (fitLabel = true)
         NormalizerMinMaxScaler normalizer = new NormalizerMinMaxScaler(0, 1);
         normalizer.fitLabel(true);
-        normalizer.fit(trainData);              //Collect training data statistics
+        normalizer.fit(trainData);              //교육 자료 통계 수집
 
         normalizer.transform(trainData);
         normalizer.transform(testData);
 
-        // ----- Configure the network -----
+        // ----- 신경망 설정 -----
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
             .seed(140)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
@@ -97,14 +96,14 @@ public class SingleTimestepRegressionExample {
 
         net.setListeners(new ScoreIterationListener(20));
 
-        // ----- Train the network, evaluating the test set performance at each epoch -----
+        // ----- 신경망을 학습하여 각 에포크마다 테스트 세트 성능 평가 -----
         int nEpochs = 300;
 
         for (int i = 0; i < nEpochs; i++) {
             net.fit(trainData);
             LOGGER.info("Epoch " + i + " complete. Time series evaluation:");
 
-            //Run regression evaluation on our single column input
+            //단일 열 입력에 대한 회귀 분석 실행
             RegressionEvaluation evaluation = new RegressionEvaluation(1);
             INDArray features = testData.getFeatureMatrix();
 
@@ -113,20 +112,20 @@ public class SingleTimestepRegressionExample {
 
             evaluation.evalTimeSeries(lables, predicted);
 
-            //Just do sout here since the logger will shift the shift the columns of the stats
+            //로그 작성자가 통계의 열을 이동 시키므로 여기에서 sout을 수행하자.
             System.out.println(evaluation.stats());
         }
 
-        //Init rrnTimeStemp with train data and predict test data
+        //학습 데이터가있는 rrnTimeStemp 초기화 및 테스트 데이터 예측
         net.rnnTimeStep(trainData.getFeatureMatrix());
         INDArray predicted = net.rnnTimeStep(testData.getFeatureMatrix());
 
-        //Revert data back to original values for plotting
+        //플로팅에 대한 데이터를 원래 값으로 되돌린다.
         normalizer.revert(trainData);
         normalizer.revert(testData);
         normalizer.revertLabels(predicted);
 
-        //Create plot with out data
+        //데이터없이 플롯 만들기
         XYSeriesCollection c = new XYSeriesCollection();
         createSeries(c, trainData.getFeatures(), 0, "Train data");
         createSeries(c, testData.getFeatures(), 99, "Actual test data");
@@ -150,7 +149,7 @@ public class SingleTimestepRegressionExample {
     }
 
     /**
-     * Generate an xy plot of the datasets provided.
+     * 제공된 데이터 세트의 xy 플롯을 생성하자.
      */
     private static void plotDataset(XYSeriesCollection c) {
 
@@ -163,10 +162,10 @@ public class SingleTimestepRegressionExample {
         boolean urls = false;
         JFreeChart chart = ChartFactory.createXYLineChart(title, xAxisLabel, yAxisLabel, c, orientation, legend, tooltips, urls);
 
-        // get a reference to the plot for further customisation...
+        // 추가 사용자 정의를 위해 플롯에 대한 참조를 얻어보자 ...
         final XYPlot plot = chart.getXYPlot();
 
-        // Auto zoom to fit time series in initial window
+        // 초기 창에서 시계열에 맞게 자동 확대 / 축소
         final NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
         rangeAxis.setAutoRange(true);
 

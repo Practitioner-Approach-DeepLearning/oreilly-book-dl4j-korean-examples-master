@@ -45,14 +45,12 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
-
 /**
- * This example was inspired by Jason Brownlee's regression examples for Keras, found here:
+ * 이 예제는 Jason Brownlee의 케라스(keras) 예제를 참고했다, 아래 내용으로 확인이 가능하다.
  * http://machinelearningmastery.com/time-series-prediction-lstm-recurrent-neural-networks-python-keras/
  *
- * It demonstrates multi time step regression using LSTM
+ * LSTM을 사용하여 다중 시간 단계 회귀를 보여준다.
  */
-
 public class MultiTimestepRegressionExample {
     private static final Logger LOGGER = LoggerFactory.getLogger(MultiTimestepRegressionExample.class);
 
@@ -67,19 +65,18 @@ public class MultiTimestepRegressionExample {
 
     public static void main(String[] args) throws Exception {
 
-        //Set number of examples for training, testing, and time steps
+        //학습, 테스트 및 단계에 대한 예제 세트 수
         int trainSize = 100;
         int testSize = 20;
         int numberOfTimesteps = 20;
 
-        //Prepare multi time step data, see method comments for more info
+        //여러 시간 단계 데이터 준비, 자세한 정보를 보려면 메소드 주석보기
         List<String> rawStrings = prepareTrainAndTest(trainSize, testSize, numberOfTimesteps);
 
-        //Make sure miniBatchSize is divisable by trainSize and testSize,
-        //as rnnTimeStep will not accept different sized examples
+        //miniBatch Size가 trainSize 및 testSize로 나눌 수 있는지 확인한다. rnn TimeStep은 다른 크기의 예제를 허용하지 않기 떄문에 miniBatchSize는 고정으로 둔다.
         int miniBatchSize = 10;
 
-        // ----- Load the training data -----
+        // ----- 학습데이터 로드 -----
         SequenceRecordReader trainFeatures = new CSVSequenceRecordReader();
         trainFeatures.initialize(new NumberedFileInputSplit(featuresDirTrain.getAbsolutePath() + "/train_%d.csv", 0, trainSize-1));
         SequenceRecordReader trainLabels = new CSVSequenceRecordReader();
@@ -87,15 +84,15 @@ public class MultiTimestepRegressionExample {
 
         DataSetIterator trainDataIter = new SequenceRecordReaderDataSetIterator(trainFeatures, trainLabels, miniBatchSize, -1, true, SequenceRecordReaderDataSetIterator.AlignmentMode.ALIGN_END);
 
-        //Normalize the training data
+        //학습 셋 일반화
         NormalizerMinMaxScaler normalizer = new NormalizerMinMaxScaler(0, 1);
         normalizer.fitLabel(true);
-        normalizer.fit(trainDataIter);              //Collect training data statistics
+        normalizer.fit(trainDataIter);              //교육 자료 통계 수집
         trainDataIter.reset();
 
 
-        // ----- Load the test data -----
-        //Same process as for the training data.
+        // ----- 테스트 데이터 로드 -----
+        //교육 데이터와 동일한 프로세스이다.
         SequenceRecordReader testFeatures = new CSVSequenceRecordReader();
         testFeatures.initialize(new NumberedFileInputSplit(featuresDirTest.getAbsolutePath() + "/test_%d.csv", trainSize, trainSize+testSize-1));
         SequenceRecordReader testLabels = new CSVSequenceRecordReader();
@@ -107,7 +104,7 @@ public class MultiTimestepRegressionExample {
         testDataIter.setPreProcessor(normalizer);
 
 
-        // ----- Configure the network -----
+        // ----- 신경망 설정 -----
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
             .seed(140)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
@@ -127,7 +124,7 @@ public class MultiTimestepRegressionExample {
 
         net.setListeners(new ScoreIterationListener(20));
 
-        // ----- Train the network, evaluating the test set performance at each epoch -----
+        // ----- 신경망을 학습하여 각 에포크마다 테스트셋의 성능 평가 -----
         int nEpochs = 50;
 
         for (int i = 0; i < nEpochs; i++) {
@@ -135,10 +132,10 @@ public class MultiTimestepRegressionExample {
             trainDataIter.reset();
             LOGGER.info("Epoch " + i + " complete. Time series evaluation:");
 
-            //Run regression evaluation on our single column input
+            //단일 열 입력에 대한 회귀 분석 실행
             RegressionEvaluation evaluation = new RegressionEvaluation(1);
 
-            //Run evaluation. This is on 25k reviews, so can take some time
+            //평가 실행. 25k 정도이기 때문에, 시간이 좀 걸릴 수 있다.
             while(testDataIter.hasNext()){
                 DataSet t = testDataIter.next();
                 INDArray features = t.getFeatureMatrix();
@@ -154,10 +151,10 @@ public class MultiTimestepRegressionExample {
         }
 
         /**
-         * All code below this point is only necessary for plotting
+         * 이 지점 아래의 모든 코드는 플로팅에만 필요하다.
          */
 
-        //Init rrnTimeStemp with train data and predict test data
+        //학습 데이터가 있는 rrnTimeStemp 초기화 및 테스트 데이터 예측
         while (trainDataIter.hasNext()) {
             DataSet t = trainDataIter.next();
             net.rnnTimeStep(t.getFeatureMatrix());
@@ -169,11 +166,11 @@ public class MultiTimestepRegressionExample {
         INDArray predicted  = net.rnnTimeStep(t.getFeatureMatrix());
         normalizer.revertLabels(predicted);
 
-        //Convert raw string data to IndArrays for plotting
+        //플로팅을 위해 원시 문자열 데이터를 IndArrays로 변환
         INDArray trainArray = createIndArrayFromStringList(rawStrings, 0, trainSize);
         INDArray testArray = createIndArrayFromStringList(rawStrings, trainSize, testSize);
 
-        //Create plot with out data
+        //데이터 없이 플롯 만들기
         XYSeriesCollection c = new XYSeriesCollection();
         createSeries(c, trainArray, 0, "Train data");
         createSeries(c, testArray, trainSize-1, "Actual test data");
@@ -186,8 +183,8 @@ public class MultiTimestepRegressionExample {
 
 
     /**
-     * Creates an IndArray from a list of strings
-     * Used for plotting purposes
+     * 문자열 목록에서 INDArray를 만든다.
+     * 플로팅 용도로 사용
      */
     private static INDArray createIndArrayFromStringList(List<String> rawStrings, int startIndex, int length) {
         List<String> stringList = rawStrings.subList(startIndex,startIndex+length);
@@ -201,7 +198,7 @@ public class MultiTimestepRegressionExample {
     }
 
     /**
-     * Used to create the different time series for ploting purposes
+     * 플로팅 목적으로 다른 시계열을 만드는 데 사용된다.
      */
     private static XYSeriesCollection createSeries(XYSeriesCollection seriesCollection, INDArray data, int offset, String name) {
         int nRows = data.shape()[2];
@@ -216,7 +213,7 @@ public class MultiTimestepRegressionExample {
     }
 
     /**
-     * Generate an xy plot of the datasets provided.
+     * 제공된 데이터 세트의 xy 플롯을 생성하자.
      */
     private static void plotDataset(XYSeriesCollection c) {
 
@@ -229,10 +226,10 @@ public class MultiTimestepRegressionExample {
         boolean urls = false;
         JFreeChart chart = ChartFactory.createXYLineChart(title, xAxisLabel, yAxisLabel, c, orientation, legend, tooltips, urls);
 
-        // get a reference to the plot for further customisation...
+        // 추가 맞춤 설정을 위한 플롯에 대한 참조 얻기...
         final XYPlot plot = chart.getXYPlot();
 
-        // Auto zoom to fit time series in initial window
+        // 초기 창에서 시계열에 맞게 자동 확대 / 축소
         final NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
         rangeAxis.setAutoRange(true);
 
@@ -249,9 +246,8 @@ public class MultiTimestepRegressionExample {
     }
 
     /**
-     * This method shows how you based on a CSV file can preprocess your data the structure expected for a
-     * multi time step problem. This examples uses a single column CSV as input, but the example should be easy to modify
-     * for use with a multi column input as well.
+     * 이 방법을 사용하면 CSV 파일을 기반으로 여러 단계의 문제에 대해 예상되는 구조의 데이터를 사전 처리 할 수 있다. 
+     * 이 예제에서는 단일 열 CSV를 입력으로 사용하지만 예제는 다중 열 입력과 함께 사용하기 쉽도록 수정해야한다.
      * @return
      * @throws IOException
      */
@@ -260,7 +256,7 @@ public class MultiTimestepRegressionExample {
 
         List<String> rawStrings = Files.readAllLines(rawPath, Charset.defaultCharset());
 
-        //Remove all files before generating new ones
+        //새 파일을 생성하기 전에 모든 파일을 제거하자.
         FileUtils.cleanDirectory(featuresDirTrain);
         FileUtils.cleanDirectory(labelsDirTrain);
         FileUtils.cleanDirectory(featuresDirTest);

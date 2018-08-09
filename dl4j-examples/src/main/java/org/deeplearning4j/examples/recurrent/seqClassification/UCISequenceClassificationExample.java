@@ -71,10 +71,46 @@ import java.util.Random;
  *
  * @author Alex Black
  */
+/**
+ * LSTM 반복적 인 신경망을 이용한 시퀀스 분류 예
+ *
+ * 이 예제는 단 변수 시계열을 여섯 가지 범주 중 하나로 분류하는 방법을 학습한다.
+ * 카테고리는 다음과 같다: Normal, Cyclic, Increasing trend, Decreasing trend, Upward shift, Downward shift
+ * 데이터는 UCI 합성 제어 차트 시계열 데이터셋이다.
+ * 상세내용:     https://archive.ics.uci.edu/ml/datasets/Synthetic+Control+Chart+Time+Series
+ * 데이터:        https://archive.ics.uci.edu/ml/machine-learning-databases/synthetic_control-mld/synthetic_control.data
+ * 이미지들:       https://archive.ics.uci.edu/ml/machine-learning-databases/synthetic_control-mld/data.jpeg
+ *
+ * 이 예제의 순서는 다음과 같다.
+ * 1. 데이터를 다운로드하고 준비한다 (downloadUCIData()메소드 안에서 수행)
+ *    (a) 600개의 데이터를 450 세트의 학습 데이터셋으로 분할하고 150개를 테스트 데이터셋으로 분할한다.
+ *    (b) 데이터 분류를 위해 CSVSequenceRecordReader를 사용하여 로드에 적합한 형식으로 데이터를 작성하자.
+ *        이 형식은 파일 당 하나의 시계열과 레이블에 대한 별도의 파일이다.
+ *        예를 들어 train / features / 0.csv는 train / labels / 0.csv라는 레이블 파일과 함께 사용되는 기능이다
+ *        데이터는 단 변량 시계열이므로 CSV 파일에는 하나의 열만 있다. 일반적으로 각 열에는 여러 값 (행당 하나의 시간 단계)이 포함된다.
+ *        또한 각 시계열마다 하나의 레이블 만 있기 때문에 레이블 CSV 파일에는 단일 값만 포함된다.
+ *
+ * 2. CSVSequenceRecordReader를 사용하여 데이터를 로드하고 SequenceRecordReaderDataSetIterator로 DataSet 개체로 변환하여 준비를 완료한다.
+ *    이 단계에 대한 자세한 내용은 다음을 참조하자. 
+ *    http://deeplearning4j.org/usingrnns#data
+ *
+ * 3. 데이터 정규화. 원시 데이터에는 효과적인 교육에 비해 너무 큰 값이 포함되어 있으므로 정규화 해야 한다.
+ *    정규화는 교육 데이터에서만 수집 된 통계 (평균, stdev)를 기반으로 NormalizerStandardize를 사용하여 수행된다.
+ *    트레이닝 데이터와 테스트 데이터는 동일한 방식으로 정규화된다.
+ *
+ * 4. 신경망 설정
+ *    여기에 설정된 데이터는 매우 작기 때문에 매개 변수가 많은 대규모 신경망을 사용할 여력이 없다. 
+ *    하나의 작은 LSTM 레이어와 하나의 RNN 출력 레이어를 사용하고 있다.
+ *
+ * 5. 신경망을 40에포크동안 학습시킨다
+ *    각 에포크마다 테스트셋의 정확도를 평가하고 출력한다.
+ *
+ * @author Alex Black
+ */
 public class UCISequenceClassificationExample {
     private static final Logger log = LoggerFactory.getLogger(UCISequenceClassificationExample.class);
 
-    //'baseDir': Base directory for the data. Change this if you want to save the data somewhere else
+    //'baseDir': 데이터의 기본 디렉토리. 데이터를 다른 곳에 저장하려면이 값을 변경하자.
     private static File baseDir = new File("src/main/resources/uci/");
     private static File baseTrainDir = new File(baseDir, "train");
     private static File featuresDirTrain = new File(baseTrainDir, "features");
@@ -86,8 +122,8 @@ public class UCISequenceClassificationExample {
     public static void main(String[] args) throws Exception {
         downloadUCIData();
 
-        // ----- Load the training data -----
-        //Note that we have 450 training files for features: train/features/0.csv through train/features/449.csv
+        // ----- 학습용 데이터 로드 -----
+        //train/features/0.csv에서 train/features/449.csv 까지 450 개의 기능에 대한 학습용 파일이 있다.
         SequenceRecordReader trainFeatures = new CSVSequenceRecordReader();
         trainFeatures.initialize(new NumberedFileInputSplit(featuresDirTrain.getAbsolutePath() + "/%d.csv", 0, 449));
         SequenceRecordReader trainLabels = new CSVSequenceRecordReader();
@@ -98,17 +134,17 @@ public class UCISequenceClassificationExample {
         DataSetIterator trainData = new SequenceRecordReaderDataSetIterator(trainFeatures, trainLabels, miniBatchSize, numLabelClasses,
             false, SequenceRecordReaderDataSetIterator.AlignmentMode.ALIGN_END);
 
-        //Normalize the training data
+        //학습용데이터 정규화
         DataNormalization normalizer = new NormalizerStandardize();
-        normalizer.fit(trainData);              //Collect training data statistics
+        normalizer.fit(trainData);              //학습자료 통계 수집
         trainData.reset();
 
-        //Use previously collected statistics to normalize on-the-fly. Each DataSet returned by 'trainData' iterator will be normalized
+        //이전에 수집 된 통계를 사용하여 바로 정상화하자. 'trainData'이터레이터에서 반환 된 각 DataSet을 정규화한다.
         trainData.setPreProcessor(normalizer);
 
 
-        // ----- Load the test data -----
-        //Same process as for the training data.
+        // ----- 테스트 데이터 로드 -----
+        //학습 데이터와 동일한 프로세스
         SequenceRecordReader testFeatures = new CSVSequenceRecordReader();
         testFeatures.initialize(new NumberedFileInputSplit(featuresDirTest.getAbsolutePath() + "/%d.csv", 0, 149));
         SequenceRecordReader testLabels = new CSVSequenceRecordReader();
@@ -117,17 +153,17 @@ public class UCISequenceClassificationExample {
         DataSetIterator testData = new SequenceRecordReaderDataSetIterator(testFeatures, testLabels, miniBatchSize, numLabelClasses,
             false, SequenceRecordReaderDataSetIterator.AlignmentMode.ALIGN_END);
 
-        testData.setPreProcessor(normalizer);   //Note that we are using the exact same normalization process as the training data
+        testData.setPreProcessor(normalizer);   //학습 데이터와 똑같은 정규화 과정을 사용하고 있다.
 
 
-        // ----- Configure the network -----
+        // ----- 신경망 설정 -----
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-                .seed(123)    //Random number generator seed for improved repeatability. Optional.
+                .seed(123)    //향상된 반복성을위한 난수 생성기 시드 설정
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).iterations(1)
                 .weightInit(WeightInit.XAVIER)
                 .updater(Updater.NESTEROVS).momentum(0.9)
                 .learningRate(0.005)
-                .gradientNormalization(GradientNormalization.ClipElementWiseAbsoluteValue)  //Not always required, but helps with this data set
+                .gradientNormalization(GradientNormalization.ClipElementWiseAbsoluteValue)  //항상 필요한 것은 아니지만이 데이터셋에 도움이 된다.
                 .gradientNormalizationThreshold(0.5)
                 .list()
                 .layer(0, new GravesLSTM.Builder().activation(Activation.TANH).nIn(1).nOut(10).build())
@@ -138,16 +174,16 @@ public class UCISequenceClassificationExample {
         MultiLayerNetwork net = new MultiLayerNetwork(conf);
         net.init();
 
-        net.setListeners(new ScoreIterationListener(20));   //Print the score (loss function value) every 20 iterations
+        net.setListeners(new ScoreIterationListener(20));   //20 회 반복 할 때마다 점수 (손실 함수 값)를 출력하자.
 
 
-        // ----- Train the network, evaluating the test set performance at each epoch -----
+        // ----- 신경망을 학습하여 각 에포크마다 테스트셋의 성능 평가 -----
         int nEpochs = 40;
         String str = "Test set evaluation at epoch %d: Accuracy = %.2f, F1 = %.2f";
         for (int i = 0; i < nEpochs; i++) {
             net.fit(trainData);
 
-            //Evaluate on the test set:
+            //테스트셋에 대한 평가
             Evaluation evaluation = net.evaluate(testData);
             log.info(String.format(str, i, evaluation.accuracy(), evaluation.f1()));
 
@@ -159,17 +195,17 @@ public class UCISequenceClassificationExample {
     }
 
 
-    //This method downloads the data, and converts the "one time series per line" format into a suitable
-    //CSV sequence format that DataVec (CsvSequenceRecordReader) and DL4J can read.
+    //이 방법은 데이터를 다운로드하고 "한 줄에 하나의 시간"형식을 적합한 형식으로 변환한다.
+    //DataVec (CsvSequenceRecordReader) 및 DL4J가 읽을 수있는 CSV 시퀀스 형식.
     private static void downloadUCIData() throws Exception {
-        if (baseDir.exists()) return;    //Data already exists, don't download it again
+        if (baseDir.exists()) return;    //데이터가 이미 있다. 다시 다운로드하지 말자.
 
         String url = "https://archive.ics.uci.edu/ml/machine-learning-databases/synthetic_control-mld/synthetic_control.data";
         String data = IOUtils.toString(new URL(url));
 
         String[] lines = data.split("\n");
 
-        //Create directories
+        //디렉토리 생성
         baseDir.mkdir();
         baseTrainDir.mkdir();
         featuresDirTrain.mkdir();
@@ -183,18 +219,18 @@ public class UCISequenceClassificationExample {
         for (String line : lines) {
             String transposed = line.replaceAll(" +", "\n");
 
-            //Labels: first 100 examples (lines) are label 0, second 100 examples are label 1, and so on
+            //레이블 : 처음 100 개의 예 (선)는 레이블 0, 두 번째 100은 레이블 1 이다.
             contentAndLabels.add(new Pair<>(transposed, lineCount++ / 100));
         }
 
-        //Randomize and do a train/test split:
+        //무작위 배정 및 학습 / 테스트 분할 수행 :
         Collections.shuffle(contentAndLabels, new Random(12345));
 
-        int nTrain = 450;   //75% train, 25% test
+        int nTrain = 450;   //75% 학습, 25% 테스트
         int trainCount = 0;
         int testCount = 0;
         for (Pair<String, Integer> p : contentAndLabels) {
-            //Write output in a format we can read, in the appropriate locations
+            //적절한 위치에서 읽을 수있는 형식으로 출력을 작성.
             File outPathFeatures;
             File outPathLabels;
             if (trainCount < nTrain) {

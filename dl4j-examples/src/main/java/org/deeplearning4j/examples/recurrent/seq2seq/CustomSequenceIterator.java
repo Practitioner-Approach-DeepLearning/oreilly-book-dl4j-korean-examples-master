@@ -9,13 +9,11 @@ import org.nd4j.linalg.factory.Nd4j;
 import java.util.ArrayList;
 import java.util.Random;
 
-
 /**
  * Created by susaneraly on 3/27/16.
- * This is class to generate pairs of random numbers given a maximum number of digits
- * This class can also be used as a reference for dataset iterators and writing one's own custom dataset iterator
+ * 최대 자릿수가 주어진 난수 쌍을 생성하는 클래스.
+ * 이 클래스는 데이터 집합 반복자에 대한 참조로 사용되거나 자체 데이터 집합 반복자를 작성하는 데 사용될 수도 있다.
  */
-
 public class CustomSequenceIterator implements MultiDataSetIterator {
 
     private Random randnumG;
@@ -47,8 +45,8 @@ public class CustomSequenceIterator implements MultiDataSetIterator {
         this.timestep = timestep;
 
         this.encoderSeqLength = numdigits * 2 + 1;
-        this.decoderSeqLength = numdigits + 1 + 1; // (numdigits + 1)max the sum can be
-        this.outputSeqLength = numdigits + 1 + 1; // (numdigits + 1)max the sum can be and "."
+        this.decoderSeqLength = numdigits + 1 + 1; // (numdigits + 1) 최대 합계일 수 있다.
+        this.outputSeqLength = numdigits + 1 + 1; // (numdigits + 1) 최대합계일 수 있다.
 
         this.currentBatch = 0;
     }
@@ -68,17 +66,17 @@ public class CustomSequenceIterator implements MultiDataSetIterator {
     }
     @Override
     public MultiDataSet next(int sampleSize) {
-        /* PLEASE NOTE:
-            I don't check for repeats from pair to pair with the generator
-            Enhancement, to be fixed later
+        /* 주의사항:
+            아래내용은 향상된 기능으로 나중에 수정될 수 있다.
          */
-        //Initialize everything with zeros - will eventually fill with one hot vectors
+        
+        //0으로 모든 것을 초기화하자. 결국 원 핫 벡터로 채울 것이다.
         INDArray encoderSeq = Nd4j.zeros(sampleSize, SEQ_VECTOR_DIM, encoderSeqLength );
         INDArray decoderSeq = Nd4j.zeros(sampleSize, SEQ_VECTOR_DIM, decoderSeqLength );
         INDArray outputSeq = Nd4j.zeros(sampleSize, SEQ_VECTOR_DIM, outputSeqLength );
 
-        //Since these are fixed length sequences of timestep
-        //Masks are not required
+        //이것들은 timestep의 고정 길이 시퀀스 들이기 때문에
+        //마스크는 필요하지 않다.
         INDArray encoderMask = Nd4j.ones(sampleSize, encoderSeqLength);
         INDArray decoderMask = Nd4j.ones(sampleSize, decoderSeqLength);
         INDArray outputMask = Nd4j.ones(sampleSize, outputSeqLength);
@@ -91,7 +89,7 @@ public class CustomSequenceIterator implements MultiDataSetIterator {
 
         /* ========================================================================== */
         for (int iSample = 0; iSample < sampleSize; iSample++) {
-            //Generate two random numbers with numdigits
+            //두개의 난수 생성
             int num1 = randnumG.nextInt((int)Math.pow(10,numdigits));
             int num2 = randnumG.nextInt((int)Math.pow(10,numdigits));
             int sum = num1 + num2;
@@ -101,18 +99,17 @@ public class CustomSequenceIterator implements MultiDataSetIterator {
                 sumArr[iSample] = sum;
             }
             /*
-            Encoder sequence:
+            인코딩 순서:
             Eg. with numdigits=4, num1=123, num2=90
-                123 + 90 is encoded as "   09+321"
-                Converted to a string to a fixed size given by 2*numdigits + 1 (for operator)
-                then reversed and then masked
-                Reversing input gives significant gain
-                Each character is transformed to a 12 dimensional one hot vector
-                    (index 0-9 for corresponding digits, 10 for "+", 11 for " ")
+                123 + 90 는  "   09+321"으로부터 인코딩 된다
+                2 * numdigits + 1에 의해 주어진 고정 크기의 문자열로 변환된다 (연산자의 경우).
+                역으로 위의 결과에 마스크를 적용해서 입력을 구할 수 있다.
+                입력을 반전 시키면 상당한 이득을 얻는다.
+                각 문자는 12 차원의 원 핫 벡터로 변환된다.(해당 자릿수의 경우 색인 0-9, "+"의 경우 10, ""의 경우 11)
             */
             int spaceFill = (encoderSeqLength) - (num1 + "+" + num2).length();
             int iPos = 0;
-            //Fill in spaces, as necessary
+            //필요한 경우 공백을 채운다.
             while (spaceFill > 0) {
                 //spaces encoded at index 12
                 encoderSeq.putScalar(new int[] {iSample,11,iPos},1);
@@ -120,51 +117,51 @@ public class CustomSequenceIterator implements MultiDataSetIterator {
                 spaceFill--;
             }
 
-            //Fill in the digits in num2 backwards
+            //숫자 2를 역순으로 채운다.
             String num2Str = String.valueOf(num2);
             for(int i = num2Str.length()-1; i >= 0; i--){
                 int onehot = Character.getNumericValue(num2Str.charAt(i));
                 encoderSeq.putScalar(new int[] {iSample,onehot,iPos},1);
                 iPos++;
             }
-            //Fill in operator in this case "+", encoded at index 11
+            //이 경우 "+"연산자를 채우고 인덱스 11에서 인코딩한다.
             encoderSeq.putScalar(new int [] {iSample,10,iPos},1);
             iPos++;
-            //Fill in the digits in num1 backwards
+            //num1의 숫자를 역순으로 채운다.
             String num1Str = String.valueOf(num1);
             for(int i = num1Str.length()-1; i >= 0; i--){
                 int onehot = Character.getNumericValue(num1Str.charAt(i));
                 encoderSeq.putScalar(new int[] {iSample,onehot,iPos},1);
                 iPos++;
             }
-            //Mask input for rest of the time series
+            //나머지 시계열에 대한 마스크 입력
             //while (iPos < timestep) {
             //    encoderMask.putScalar(new []{iSample,iPos},1);
             //    iPos++;
             // }
             /*
-            Decoder and Output sequences:
+            디코더 및 출력 시퀀스:
             */
-            //Fill in the digits from the sum
+            //합계에서 자릿수 채우기
             iPos = 0;
             char [] sumCharArr = String.valueOf(num1+num2).toCharArray();
             for(char c : sumCharArr) {
                 int digit = Character.getNumericValue(c);
                 outputSeq.putScalar(new int [] {iSample,digit,iPos},1);
-                //decoder input filled with spaces
+                //공백으로 채워진 디코더 입력
                 decoderSeq.putScalar(new int [] {iSample,11,iPos},1);
                 iPos++;
             }
-            //Fill in spaces, as necessary
-            //Leaves last index for "."
+            //공백을 채운다 가능하다면
+            //마지막 인덱스를 위해 남겨두자
             while (iPos < numdigits + 1) {
-                //spaces encoded at index 12
+                //12번쨰 인덱스에서 공백이 인코딩 된다
                 outputSeq.putScalar(new int [] {iSample,11,iPos}, 1);
-                //decoder input filled with spaces
+                //공백으로 채워진 디코더 입력
                 decoderSeq.putScalar(new int [] {iSample,11,iPos},1);
                 iPos++;
             }
-            //Predict final " "
+            //최종적 예측값
             outputSeq.putScalar(new int [] {iSample,10,iPos}, 1);
             decoderSeq.putScalar(new int [] {iSample,11,iPos}, 1);
         }
