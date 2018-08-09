@@ -26,36 +26,34 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 import java.io.*;
 import java.net.URL;
 
-/**Example: Given a movie review (raw text), classify that movie review as either positive or negative based on the words it contains.
- * This is done by combining Word2Vec vectors and a recurrent neural network model. Each word in a review is vectorized
- * (using the Word2Vec model) and fed into a recurrent neural network.
- * Training data is the "Large Movie Review Dataset" from http://ai.stanford.edu/~amaas/data/sentiment/
- * This data set contains 25,000 training reviews + 25,000 testing reviews
+/**예제 : 영화 리뷰 (원문)가 주어지면, 그 영화 리뷰에 들어있는 단어를 기준으로 영화 리뷰를 양수 또는 음수로 분류.
+ * 이것은 Word2Vec 벡터와 반복적 인 신경망 모델을 결합하여 이루어진다. 리뷰의 각 단어는 벡터화되어 (Word2Vec 모델 사용) 반복적 인 신경망으로 공급된다.
+ * 학습용 데이터는 "Large Movie Review Dataset" from http://ai.stanford.edu/~amaas/data/sentiment/ 이다.
+ * 이 데이터셋은 25,000 학습용 리뷰 데이터셋과 25,000개의 훈련 데이터셋으로 구성되어 있다.
  *
- * Process:
- * 1. Automatic on first run of example: Download data (movie reviews) + extract
- * 2. Load existing Word2Vec model (for example: Google News word vectors. You will have to download this MANUALLY)
- * 3. Load each each review. Convert words to vectors + reviews to sequences of vectors
- * 4. Train network
+ * 과정:
+ * 1. 데이터 다운로드
+ * 2. 이미 만들어 놓은 Word2Vector 모델 사용
+ * 3. 각각 리뷰를 로드한다. 단어를 벡터로 변환하고 벡터의 시퀀스를 검토한다.
+ * 4. 신경망 학습
  *
- * With the current configuration, gives approx. 83% accuracy after 1 epoch. Better performance may be possible with
- * additional tuning.
+ * 현재 구성을 사용하면 약. 1 epoch 이후 83 %의 정확도. 추가 튜닝을 사용하면 더 나은 성능을 얻을 수 있다.
  *
- * NOTE / INSTRUCTIONS:
- * You will have to download the Google News word vector model manually. ~1.5GB
- * The Google News vector model available here: https://code.google.com/p/word2vec/
- * Download the GoogleNews-vectors-negative300.bin.gz file
- * Then: set the WORD_VECTORS_PATH field to point to this location.
+ * 주의사항 및 지시사항:
+ * Google News word vector 모델 받는 방법
+ * Google News word vector 모델은 해당 URL에서 확인 가능하다.: https://code.google.com/p/word2vec/
+ * 다운로드 한다 : GoogleNews-vectors-negative300.bin.gz 파일  ~1.5GB
+ * 그런 다음 이 위치를 가리 키도록 WORD_VECTORS_PATH 필드를 설정.
  *
  * @author Alex Black
  */
 public class Word2VecSentimentRNN {
 
-    /** Data URL for downloading */
+    /** 데이터 다운로드 URL */
     public static final String DATA_URL = "http://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz";
-    /** Location to save and extract the training/testing data */
+    /** 학습, 테스트 데이터셋을 저장하는 위치  */
     public static final String DATA_PATH = FilenameUtils.concat(System.getProperty("java.io.tmpdir"), "dl4j_w2vSentiment/");
-    /** Location (local file system) for the Google News vectors. Set this manually. */
+    /** Google News Vector를 저장할 위치  */
     public static final String WORD_VECTORS_PATH = "/PATH/TO/YOUR/VECTORS/GoogleNews-vectors-negative300.bin.gz";
 
 
@@ -64,15 +62,15 @@ public class Word2VecSentimentRNN {
             throw new RuntimeException("Please set the WORD_VECTORS_PATH before running this example");
         }
 
-        //Download and extract data
+        //데이터를 다운로드하고 추출한다
         downloadData();
 
-        int batchSize = 64;     //Number of examples in each minibatch
-        int vectorSize = 300;   //Size of the word vectors. 300 in the Google News model
-        int nEpochs = 1;        //Number of epochs (full passes of training data) to train on
-        int truncateReviewsToLength = 256;  //Truncate reviews with length (# words) greater than this
+        int batchSize = 64;     //각 미니배치별 예제 개수
+        int vectorSize = 300;   //워드 벡터의 크기, Google News Vector의 경우 300
+        int nEpochs = 1;        //학습을 위한 에포크 수
+        int truncateReviewsToLength = 256;  //truncateReviewsToLength보다 긴 리뷰는 잘라낸다.
 
-        //Set up network configuration
+        //신경망 설정
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
             .updater(Updater.ADAM).adamMeanDecay(0.9).adamVarDecay(0.999)
             .regularization(true).l2(1e-5)
@@ -90,7 +88,7 @@ public class Word2VecSentimentRNN {
         net.init();
         net.setListeners(new ScoreIterationListener(1));
 
-        //DataSetIterators for training and testing respectively
+        //교육 및 테스트 용 DataSetIterators
         WordVectors wordVectors = WordVectorSerializer.loadStaticModel(new File(WORD_VECTORS_PATH));
         SentimentExampleIterator train = new SentimentExampleIterator(DATA_PATH, wordVectors, batchSize, truncateReviewsToLength, true);
         SentimentExampleIterator test = new SentimentExampleIterator(DATA_PATH, wordVectors, batchSize, truncateReviewsToLength, false);
@@ -101,7 +99,7 @@ public class Word2VecSentimentRNN {
             train.reset();
             System.out.println("Epoch " + i + " complete. Starting evaluation:");
 
-            //Run evaluation. This is on 25k reviews, so can take some time
+            //평가를 실행한다. 리뷰의 크기 때문에 시간이 좀 걸릴 수 있다.
             Evaluation evaluation = new Evaluation();
             while (test.hasNext()) {
                 DataSet t = test.next();
@@ -118,7 +116,7 @@ public class Word2VecSentimentRNN {
             System.out.println(evaluation.stats());
         }
 
-        //After training: load a single example and generate predictions
+        //교육 후 : 단일 예제를 로드하고 예측을 생성한다.
         File firstPositiveReviewFile = new File(FilenameUtils.concat(DATA_PATH, "aclImdb/test/pos/0_10.txt"));
         String firstPositiveReview = FileUtils.readFileToString(firstPositiveReviewFile);
 
@@ -137,11 +135,11 @@ public class Word2VecSentimentRNN {
     }
 
     private static void downloadData() throws Exception {
-        //Create directory if required
+        //필요하다면 디렉토리도 생성한다.
         File directory = new File(DATA_PATH);
         if(!directory.exists()) directory.mkdir();
 
-        //Download file:
+        //파일 다운로드
         String archizePath = DATA_PATH + "aclImdb_v1.tar.gz";
         File archiveFile = new File(archizePath);
         String extractedPath = DATA_PATH + "aclImdb";
@@ -151,13 +149,13 @@ public class Word2VecSentimentRNN {
             System.out.println("Starting data download (80MB)...");
             FileUtils.copyURLToFile(new URL(DATA_URL), archiveFile);
             System.out.println("Data (.tar.gz file) downloaded to " + archiveFile.getAbsolutePath());
-            //Extract tar.gz file to output directory
+            //output 디렉토리에 tar.gz파일의 압축을 풀어준다.
             extractTarGz(archizePath, DATA_PATH);
         } else {
-            //Assume if archive (.tar.gz) exists, then data has already been extracted
+            //아카이브 (.tar.gz)가 있고 데이터가 이미 추출되었다고 가정한다.
             System.out.println("Data (.tar.gz file) already exists at " + archiveFile.getAbsolutePath());
             if( !extractedFile.exists()){
-            	//Extract tar.gz file to output directory
+            	//output 디렉토리에 tar.gz파일의 압축을 풀어준다.
             	extractTarGz(archizePath, DATA_PATH);
             } else {
             	System.out.println("Data (extracted) already exists at " + extractedFile.getAbsolutePath());
@@ -174,11 +172,11 @@ public class Word2VecSentimentRNN {
                 new GzipCompressorInputStream( new BufferedInputStream( new FileInputStream(filePath))))){
             TarArchiveEntry entry;
 
-            /** Read the tar entries using the getNextEntry method **/
+            /** getNextEntry 메소드를 사용하여 tar 항목 읽기 **/
             while ((entry = (TarArchiveEntry) tais.getNextEntry()) != null) {
                 //System.out.println("Extracting file: " + entry.getName());
 
-                //Create directories as required
+                //필요하다면 디렉토리 생성
                 if (entry.isDirectory()) {
                     new File(outputPath + entry.getName()).mkdirs();
                     dirCount++;

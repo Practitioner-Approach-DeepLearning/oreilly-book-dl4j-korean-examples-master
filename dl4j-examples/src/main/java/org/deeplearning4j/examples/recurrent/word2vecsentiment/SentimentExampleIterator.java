@@ -21,15 +21,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-/** This is a DataSetIterator that is specialized for the IMDB review dataset used in the Word2VecSentimentRNN example
- * It takes either the train or test set data from this data set, plus a WordVectors object (typically the Google News
- * 300 pretrained vectors from https://code.google.com/p/word2vec/) and generates training data sets.<br>
- * Inputs/features: variable-length time series, where each word (with unknown words removed) is represented by
- * its Word2Vec vector representation.<br>
- * Labels/target: a single class (negative or positive), predicted at the final time step (word) of each review
+/** 이것은 Word2VecSentimentRNN 예제에서 사용되는 IMDB 검토 데이터셋에 특화된 DataSetIterator이다.
+ * 이 데이터셋의 학습 또는 테스트셋 데이터와 WordVectors 객체 (일반적으로 https://code.google.com/p/word2vec/의 Google 뉴스 300 사전 학습 벡터)를 받아 학습 데이터셋을 생성한다
+ * 입력 / 특징 : 각 단어 (알 수없는 단어가 제거 된)가 Word2Vec 벡터 표현으로 표현되는 가변 길이 시계열
+ * 라벨 / 타겟 : 각 리뷰의 최종 타임 스텝 (단어)에서 예측 된 단일 클래스 (음수 또는 양수)
  *
  * @author Alex Black
  */
+
 public class SentimentExampleIterator implements DataSetIterator {
     private final WordVectors wordVectors;
     private final int batchSize;
@@ -42,11 +41,11 @@ public class SentimentExampleIterator implements DataSetIterator {
     private final TokenizerFactory tokenizerFactory;
 
     /**
-     * @param dataDirectory the directory of the IMDB review data set
-     * @param wordVectors WordVectors object
-     * @param batchSize Size of each minibatch for training
-     * @param truncateLength If reviews exceed
-     * @param train If true: return the training data. If false: return the testing data.
+     * @param dataDirectory IMDB검토 데이터셋의 위치
+     * @param wordVectors WordVectors 객체
+     * @param batchSize 학습에 사용되는 미니배치 크기
+     * @param truncateLength 리뷰가 초과하는 경우
+     * @param train  true라면 학습데이터를 반환한다. false라면 테스트 데이터를 반환한다.
      */
     public SentimentExampleIterator(String dataDirectory, WordVectors wordVectors, int batchSize, int truncateLength, boolean train) throws IOException {
         this.batchSize = batchSize;
@@ -77,18 +76,18 @@ public class SentimentExampleIterator implements DataSetIterator {
     }
 
     private DataSet nextDataSet(int num) throws IOException {
-        //First: load reviews to String. Alternate positive and negative reviews
+        // 첫번째: 리뷰를 String으로 불러온다. positive, negative 리뷰로 분류한다.
         List<String> reviews = new ArrayList<>(num);
         boolean[] positive = new boolean[num];
         for( int i=0; i<num && cursor<totalExamples(); i++ ){
             if(cursor % 2 == 0){
-                //Load positive review
+                //긍정적인 리뷰
                 int posReviewNumber = cursor / 2;
                 String review = FileUtils.readFileToString(positiveFiles[posReviewNumber]);
                 reviews.add(review);
                 positive[i] = true;
             } else {
-                //Load negative review
+                //부정적인 리뷰
                 int negReviewNumber = cursor / 2;
                 String review = FileUtils.readFileToString(negativeFiles[negReviewNumber]);
                 reviews.add(review);
@@ -97,7 +96,7 @@ public class SentimentExampleIterator implements DataSetIterator {
             cursor++;
         }
 
-        //Second: tokenize reviews and filter out unknown words
+        //두번째: 토큰화는 미지의 단어를 검토하고 걸러낸다.
         List<List<String>> allTokens = new ArrayList<>(reviews.size());
         int maxLength = 0;
         for(String s : reviews){
@@ -110,15 +109,15 @@ public class SentimentExampleIterator implements DataSetIterator {
             maxLength = Math.max(maxLength,tokensFiltered.size());
         }
 
-        //If longest review exceeds 'truncateLength': only take the first 'truncateLength' words
+        //가장 긴 리뷰가 'truncateLength'를 초과하는 경우 : 첫 번째 'truncateLength'단어 만 가져온다.
         if(maxLength > truncateLength) maxLength = truncateLength;
 
-        //Create data for training
-        //Here: we have reviews.size() examples of varying lengths
+        //학습을 위해 데이터를 생성한다
+        //다양한 길이의 reviews.size()가 있다
         INDArray features = Nd4j.create(reviews.size(), vectorSize, maxLength);
-        INDArray labels = Nd4j.create(reviews.size(), 2, maxLength);    //Two labels: positive or negative
-        //Because we are dealing with reviews of different lengths and only one output at the final time step: use padding arrays
-        //Mask arrays contain 1 if data is present at that time step for that example, or 0 if data is just padding
+        INDArray labels = Nd4j.create(reviews.size(), 2, maxLength);    //두개의 레이블: 긍정적 혹은 부정적
+        //서로 다른 길이의 리뷰와 마지막 타임 스텝에서 하나의 출력 만 처리하기 때문에 패딩 배열을 사용한다.
+        //마스크 배열은 해당 예제의 해당 시간 단계에 데이터가 있으면 1을, 데이터가 패딩이면 0을 포함한다.
         INDArray featuresMask = Nd4j.zeros(reviews.size(), maxLength);
         INDArray labelsMask = Nd4j.zeros(reviews.size(), maxLength);
 
@@ -126,20 +125,20 @@ public class SentimentExampleIterator implements DataSetIterator {
         for( int i=0; i<reviews.size(); i++ ){
             List<String> tokens = allTokens.get(i);
             temp[0] = i;
-            //Get word vectors for each word in review, and put them in the training data
+            //리뷰에서 각 단어에 대한 단어 벡터를 가져 와서 교육 데이터에 넣는다.
             for( int j=0; j<tokens.size() && j<maxLength; j++ ){
                 String token = tokens.get(j);
                 INDArray vector = wordVectors.getWordVectorMatrix(token);
                 features.put(new INDArrayIndex[]{NDArrayIndex.point(i), NDArrayIndex.all(), NDArrayIndex.point(j)}, vector);
 
                 temp[1] = j;
-                featuresMask.putScalar(temp, 1.0);  //Word is present (not padding) for this example + time step -> 1.0 in features mask
+                featuresMask.putScalar(temp, 1.0);  //이 예제에서는 Word가 존재하지만 (패딩이 아님) 피처 마스크의 시간 단계 -> 1.0
             }
 
             int idx = (positive[i] ? 0 : 1);
             int lastIdx = Math.min(tokens.size(),maxLength);
-            labels.putScalar(new int[]{i,idx,lastIdx-1},1.0);   //Set label: [0,1] for negative, [1,0] for positive
-            labelsMask.putScalar(new int[]{i,lastIdx-1},1.0);   //Specify that an output exists at the final time step for this example
+            labels.putScalar(new int[]{i,idx,lastIdx-1},1.0);   //레이블 셋팅: [0,1] 은 부정, [1,0]은 긍정
+            labelsMask.putScalar(new int[]{i,lastIdx-1},1.0);   //이 예제의 마지막 타임 스탭에 자세한 출력값이 있다.
         }
 
         return new DataSet(features,labels,featuresMask,labelsMask);
@@ -232,12 +231,12 @@ public class SentimentExampleIterator implements DataSetIterator {
     }
 
     /**
-     * Used post training to load a review from a file to a features INDArray that can be passed to the network output method
+     * 파일에서 신경망 출력 방법으로 전달할 수있는 기능 INDArray로 리뷰를 로드하는 데 사용되는 사후 교육
      *
-     * @param file      File to load the review from
-     * @param maxLength Maximum length (if review is longer than this: truncate to maxLength). Use Integer.MAX_VALUE to not nruncate
-     * @return          Features array
-     * @throws IOException If file cannot be read
+     * @param file      리뷰를 가져올 파일
+     * @param maxLength 최대 길이 (검토가 this보다 길면 : truncate to maxLength). nruncate하지 않으려면 Integer.MAX_VALUE를 사용하자.
+     * @return          특징 배열
+     * @throws IOException 파일을 읽을 수 없는 경우 예외처리
      */
     public INDArray loadFeaturesFromFile(File file, int maxLength) throws IOException {
         String review = FileUtils.readFileToString(file);
@@ -245,11 +244,11 @@ public class SentimentExampleIterator implements DataSetIterator {
     }
 
     /**
-     * Used post training to convert a String to a features INDArray that can be passed to the network output method
+     * 문자열을 신경망 출력 방법으로 전달할 수있는 기능 INDArray로 변환하는 사후 사후 교육
      *
-     * @param reviewContents Contents of the review to vectorize
-     * @param maxLength Maximum length (if review is longer than this: truncate to maxLength). Use Integer.MAX_VALUE to not nruncate
-     * @return Features array for the given input String
+     * @param reviewContents 벡터화할 검토내용
+     * @param maxLength 최대 길이 (검토가 this보다 길면 : truncate to maxLength). nruncate하지 않으려면 Integer.MAX_VALUE를 사용하자.
+     * @return 입력 String에 대한 특징 배열
      */
     public INDArray loadFeaturesFromString(String reviewContents, int maxLength){
         List<String> tokens = tokenizerFactory.create(reviewContents).getTokens();
