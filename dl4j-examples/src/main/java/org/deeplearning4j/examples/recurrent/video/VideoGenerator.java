@@ -15,8 +15,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Random;
 
-/**A support class for generating a synthetic video data set
- * Nothing here is specific to DL4J
+/**인조 비디오 데이터셋을 만들어내는데 사용되는 클래스
+ * 여기에는 DL4J 관련된 내용은 없다.
  * @author Alex Black
  */
 public class VideoGenerator {
@@ -26,15 +26,15 @@ public class VideoGenerator {
     public static final int SHAPE_SIZE = 25;
     public static final int SHAPE_MIN_DIST_FROM_EDGE = 15;
     public static final int DISTRACTOR_MIN_DIST_FROM_EDGE = 0;
-    public static final int LINE_STROKE_WIDTH = 6;  //Width of line (line shape only)
+    public static final int LINE_STROKE_WIDTH = 6;  //라인의 넓이
     public static final BasicStroke lineStroke = new BasicStroke(LINE_STROKE_WIDTH);
-    public static final int MIN_FRAMES = 10;    //Minimum number of frames the target shape to be present
+    public static final int MIN_FRAMES = 10;    //타겟 모양이 존재해야하는 최소 프레임 수
     public static final float MAX_NOISE_VALUE = 0.5f;
 
     private static int[] generateVideo(String path, int nFrames, int width, int height, int numShapes, Random r,
                                       boolean backgroundNoise, int numDistractorsPerFrame) throws Exception {
 
-        //First: decide where transitions between one shape and another are
+        //첫 번째 : 한 모양과 다른 모양 사이의 전환
         double[] rns = new double[numShapes];
         double sum = 0;
         for (int i = 0; i < numShapes; i++) {
@@ -49,7 +49,7 @@ public class VideoGenerator {
             startFrames[i] = (int) (startFrames[i - 1] + MIN_FRAMES + rns[i] * (nFrames - numShapes * MIN_FRAMES));
         }
 
-        //Randomly generate shape positions, velocities, colors, and type
+        //무작위 도형 위치, 속도, 색상 및 유형 생성
         int[] shapeTypes = new int[numShapes];
         int[] initialX = new int[numShapes];
         int[] initialY = new int[numShapes];
@@ -65,7 +65,7 @@ public class VideoGenerator {
             color[i] = new Color(r.nextFloat(), r.nextFloat(), r.nextFloat());
         }
 
-        //Generate a sequence of BufferedImages with the given shapes, and write them to the video
+        //지정된 모양으로 BufferedImages의 순차 순서를 생성 해, 비디오로 내보낸다.
         SequenceEncoder enc = new SequenceEncoder(new File(path));
         int currShape = 0;
         int[] labels = new int[nFrames];
@@ -87,11 +87,11 @@ public class VideoGenerator {
 
             g2d.setColor(color[currShape]);
 
-            //Position of shape this frame
+            //프레임에서 모양들의 위치
             int currX = (int) (initialX[currShape] + (i - startFrames[currShape]) * velocityX[currShape] * MAX_VELOCITY);
             int currY = (int) (initialY[currShape] + (i - startFrames[currShape]) * velocityY[currShape] * MAX_VELOCITY);
 
-            //Render the shape
+            //모양을 그린다
             switch (shapeTypes[currShape]) {
                 case 0:
                     //Circle
@@ -114,7 +114,7 @@ public class VideoGenerator {
                     throw new RuntimeException();
             }
 
-            //Add some distractor shapes, which are present for one frame only
+            //하나의 프레임에서만 나타나는 인식 불가능한 모양들을 추가한다.
             for( int j=0; j<numDistractorsPerFrame; j++ ){
                 int distractorShapeIdx = r.nextInt(NUM_SHAPES);
 
@@ -146,7 +146,7 @@ public class VideoGenerator {
             g2d.dispose();
             labels[i] = shapeTypes[currShape];
         }
-        enc.finish();   //write .mp4
+        enc.finish();   //mp4파일로 만들어낸다
 
         return labels;
     }
@@ -161,7 +161,7 @@ public class VideoGenerator {
             String labelsPath = FilenameUtils.concat(outputFolder, filePrefix + "_" + i + ".txt");
             int[] labels = generateVideo(videoPath, nFrames, width, height, numShapesPerVideo, r, backgroundNoise, numDistractorsPerFrame);
 
-            //Write labels to text file
+            //레이블들을 텍스트파일로 출력한다.
             StringBuilder sb = new StringBuilder();
             for (int j = 0; j < labels.length; j++) {
                 sb.append(labels[j]);
