@@ -30,37 +30,38 @@ import java.util.ArrayList;
 public class AdditionRNN {
 
     /*
-        This example is modeled off the sequence to sequence RNNs described in http://arxiv.org/abs/1410.4615
-        Specifically, a sequence to sequence NN is build for the addition operation
-        Two numbers and the addition operator are encoded as a sequence and passed through an "encoder" RNN
-        The output from the last time step of the encoder RNN is reinterpreted as a time series and passed through the "decoder" RNN
-        The result is the output of the decoder RNN which in training is the sum, encoded as a sequence.
-        One hot vectors are used for encoding/decoding
-        20 epochs give >85% accuracy for 2 digits
-        To try out addition for numbers with different number of digits simply change "NUM_DIGITS"
+        이 예제는 http://arxiv.org/abs/1410.4615에 설명 된 시퀀스 RNN에 대한 시퀀스에서 모델링된다. 
+        특히 시퀀스 NN에 대한 시퀀스는 더하기 연산을 위해 빌드된다. 
+        두 개의 숫자와 더하기 연산자는 시퀀스로 인코딩되어 통과한다. 
+        "인코더"RNN 인코더 RNN의 마지막 타임 스텝의 출력은 시계열로 재 해석되어 "디코더"RNN을 통과한다. 
+        결과는 시퀀스에서 인코딩 된 합계 인 디코더 RNN의 출력이다 . 
+        원 핫 벡터는 인코딩/디코딩에 사용된다.
+        20 에포크로 2 자리 숫자에 85 % 이상의 정확도 제공
+        NUM_DIGITS을 변경하는 간단한 작업으로 다른 숫자로 바꿔서 테스트 해볼 수 있다.
      */
 
-    //Random number generator seed, for reproducability
+
+    // 난수 생성기 시드
     public static final int seed = 1234;
 
     public static final int NUM_DIGITS =2;
     public static final int FEATURE_VEC_SIZE = 12;
 
-    //Tweak these to tune - dataset size = batchSize * totalBatches
+    //데이터셋 사이즈 = batchSize * totalBatches
     public static final int batchSize = 10;
     public static final int totalBatches = 500;
     public static final int nEpochs = 50;
     public static final int nIterations = 1;
     public static final int numHiddenNodes = 128;
 
-    //Currently the sequences are implemented as length = max length
-    //This is a placeholder for an enhancement
+    //현재 시퀀스 길이 = max Length
+    //시간별 스탭에 따라 값이 계속 바뀐다
     public static final int timeSteps = NUM_DIGITS * 2 + 1;
 
     public static void main(String[] args) throws Exception {
 
         DataTypeUtil.setDTypeForContext(DataBuffer.Type.DOUBLE);
-        //Training data iterator
+        //학습 데이터 반복자
         CustomSequenceIterator iterator = new CustomSequenceIterator(seed, batchSize, totalBatches, NUM_DIGITS,timeSteps);
 
         ComputationGraphConfiguration configuration = new NeuralNetConfiguration.Builder()
@@ -87,7 +88,7 @@ public class AdditionRNN {
         //net.setListeners(new ScoreIterationListener(200),new HistogramIterationListener(200));
         net.setListeners(new ScoreIterationListener(1));
         //net.setListeners(new HistogramIterationListener(200));
-        //Train model:
+        //학습용 모델
         int iEpoch = 0;
         int testSize = 200;
         while (iEpoch < nEpochs) {
@@ -112,7 +113,7 @@ public class AdditionRNN {
 
     }
 
-    //This is a helper function to make the predictions from the net more readable
+    //이것은 신경망으로부터 예측값을 더 잘 읽게 만드는 도우미 함수이다.
     private static void encode_decode(int[] num1, int[] num2, int[] sum, INDArray answers) {
 
         int nTests = answers.size(0);
