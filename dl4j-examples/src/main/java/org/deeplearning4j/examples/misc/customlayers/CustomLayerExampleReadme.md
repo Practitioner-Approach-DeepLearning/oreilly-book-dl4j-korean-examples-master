@@ -1,52 +1,41 @@
 
-# Deeplearning4j: Custom Layer Example
+# Deeplearning4j: 커스텀 계층 예제
 
-This example adds a custom layer (i.e., one not defined in Deeplearning4j core).
+이 예제는 커스텀 계층을 추가하는 예제이다
+이 예제는 손수 만든 예제이지만 기본 구성 및 테스트 프로세스를 보여주기에 적합하다.
 
-The example itself contrived, but shows the basic configuration and testing process.
+이 예제의 목적은, 다층 퍼셉트론 계층을 DL4J의 DenseLayer 클래스와 매우 유사하게 구현되어졌다.
+차이점은 다음과 같다.
 
-For the purposes of this example, we have implemented a a multi-layer perceptron (MLP)
-layer very similar to DL4J's DenseLayer class. The difference here is that:
+- 추가적인 활성화함수가 설정내에 있다.
+- 일반적인 활성화함수는 출력의 전반부에 적용된다.
+- 다른 (새로운) 활성화함수가 출력의 후반부에 적용된다.
 
-- An additional activation function is present in the configuration
-- The standard activation function is applied to the first half of the layer outputs
-- The other (new) activation function is applied to the second half of the outputs
+## 커스텀 계층 작성하기
 
-## Writing Your Custom Layer
+커스텀 계층을 추가하기 위해 두가지 구성요소가 있다.
 
-There are two components to adding a custom layer:
+1. 계층 설정 클래스 추가: org.deeplearning4j.nn.conf.layers.Layer를 확장하여 만든다.
+2. 계층 구현 클래스 추가: org.deeplearning4j.nn.api.Layer를 확장하여 만든다.
 
-1. Adding the layer configuration class: extends org.deeplearning4j.nn.conf.layers.Layer
-2. Adding the layer implementation class: implements org.deeplearning4j.nn.api.Layer
+설정 계층 (위의 1번) 클래스는 설정을 담당한다. 다층신경망이나 ComputationGraph를 구성하고자 할때 사용한다.
+이 클래스에 커스텀 설정들을 작성하고 계층에 적용시키면 된다.
 
-The configuration layer ((1) above) class handles the settings. It's the one you would
-use when constructing a MultiLayerNetwork or ComputationGraph. You can add custom
-settings here, and use them in your layer.
+구현 계층 (위의 2번) 클래스는 파라미터를 가지고 있고 신경망의 전방향 전달 혹은 역방향 전달을 할 수 있도록 한다. 이것은
+org.deeplearning4j.nn.conf.layers.Layer.instantiate(...)에서 생성된다. 다른 말로하면, 인스턴스 생성 메소드는 설정에서 구현까지 이르는 방법이다.
+다층신경망 혹은 ComputationGraph에서 신경망을 초기화할 때 이 메소드를 사용한다.
 
-The implementation layer ((2) above) class has parameters, and handles network forward
-pass, backpropagation, etc. It is created from the org.deeplearning4j.nn.conf.layers.Layer.instantiate(...)
-method. In other words: the instantiate method is how we go from the configuration
-to the implementation; MultiLayerNetwork or ComputationGraph will call this method
-when initializing the network.
+예를 들어 CustomLayer(설정 클래스) 그리고 CustomLayerImpl (구현 클래스) 로 구분된다. 이 두가지 클래스 모두에 대한 많은 의견들이 있다.
 
-An example of these are CustomLayer (the configuration class) and CustomLayerImpl (the
-implementation class). Both of these classes have extensive comments regarding
-their methods.
+DL4J에는 두개의 DenseLayer 클론, 두개의 GravesLSTM 클래스들이 있다, 하나는 구성을 위한 것이고 하나는 구현을 위한 것이다.
+혼란을 피하기 위해 같은이름을 사용하지 않았다.
 
-You'll note that in Deeplearning4j there are two DenseLayer clases, two GravesLSTM classes,
-etc: the reason is because one is for the configuration, one is for the implementation.
-We have not followed this "same name" pattern here to hopefully avoid confusion.
-
-## Testing Your Custom Layer
-
-Once you have added a custom layer, it is necessary to run some tests to ensure
-it is correct.
-
+## 커스텀 계층의 테스트
+커스텀 레이어를 추가 한 뒤에 몇가지 테스트를 실행하여 올바르게 작동하는지 확인한다.
 These tests should at a minimum include the following:
+이 테스트들은 최소한 아래 두가지 내용을 포함해야 한다.
+1. JSON을 이용해서 올바르게 작동하는지 테스트 해야 한다.
+   이는 커스텀 계층이 있는 신경망이 모델 직렬화 (저장) 및 Spark 교육 모두와 함께 작동하는 데 필요하기 때문이다.
+2. 구현 내용이 올바른지 확인하기 위해 기울기 검사를 한다.
 
-1. Tests to ensure that the JSON configuration (to/from JSON) works correctly
-   This is necessary for networks with your custom layer to function with both
-   model serialization (saving) and Spark training.
-2. Gradient checks to ensure that the implementation is correct
-
-These tests are implemented in the CustomLayerExample class.
+이 테스트는 CustomLayerExample 클래스에서 확인할 수 있다.
